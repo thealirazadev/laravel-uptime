@@ -87,6 +87,14 @@ class Monitor extends Model
     }
 
     /**
+     * @return HasMany<CheckRollup, $this>
+     */
+    public function rollups(): HasMany
+    {
+        return $this->hasMany(CheckRollup::class);
+    }
+
+    /**
      * @return HasMany<Incident, $this>
      */
     public function incidents(): HasMany
