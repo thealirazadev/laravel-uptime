@@ -41,11 +41,14 @@ it('shows an empty state when there are no monitors', function () {
 });
 
 it('renders the create, show, and edit screens', function () {
-    $monitor = Monitor::factory()->create();
+    $monitor = Monitor::factory()->create([
+        'url' => 'https://client-a.example',
+        'ssl_expires_at' => now()->addDays(20),
+    ]);
     Check::factory()->for($monitor)->create();
 
     get('/monitors/create')->assertOk()->assertSee('Add monitor');
-    get("/monitors/{$monitor->id}")->assertOk()->assertSee($monitor->name);
+    get("/monitors/{$monitor->id}")->assertOk()->assertSee($monitor->name)->assertSee('SSL expires');
     get("/monitors/{$monitor->id}/edit")->assertOk()->assertSee('Edit monitor');
 });
 

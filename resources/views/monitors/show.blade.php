@@ -37,6 +37,20 @@
                     <div class="value mono" style="font-size:0.9rem; color:var(--down)">{{ $monitor->last_error }}</div>
                 </div>
             @endif
+            @if ($monitor->isHttps())
+                <div class="stat">
+                    <div class="label">SSL expires</div>
+                    <div class="value" style="font-size:1rem">
+                        @if ($monitor->ssl_expires_at)
+                            @php $daysLeft = \App\Models\Monitor::sslDaysLeft($monitor->ssl_expires_at); @endphp
+                            {{ $monitor->ssl_expires_at->format('Y-m-d') }} UTC
+                            <span class="meta" @if ($daysLeft <= 14) style="color:var(--warn)" @endif>({{ $daysLeft }} days left)</span>
+                        @else
+                            <span class="meta">Not checked yet</span>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
