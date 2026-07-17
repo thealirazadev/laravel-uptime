@@ -19,9 +19,18 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   live local target over the database queue (up path, and 2-cycle down path opening one incident
   with started_at at the first failure). Logs show only structured events, no traces.
 
+- 2026-07-18 — Phase 2 complete and verified. Alert channels (encrypted config, masked
+  secrets, CRUD, per-monitor routing), `AlertPayload` + `AlertSender` (mail/slack/webhook),
+  `SendAlert` job (tries 3, backoff 60/300) with structural dedup (alerts dispatch only inside
+  the incident open/close transitions), send-test action, SSL expiry (`Ssl` reader, threshold
+  state machine, `RunSslCheck` + `uptime:dispatch-ssl` daily), rollups (`uptime:rollup hour|day`)
+  and pruning (`uptime:prune`), all scheduled (rollup before prune). Full suite green: 102 tests
+  / 286 assertions; `pint --test` clean. End-to-end webhook-failure run confirmed the webhook URL
+  and secret never reach the logs.
+
 ## In progress
 
-- Phase 2 next: alert channels, SSL expiry, retention/rollups.
+- Phase 3 next: public status pages (HTML + JSON), rollup-backed charts, throttling, error pages.
 
 ## Decisions log
 
@@ -59,4 +68,22 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   per commit: migration, model, job, route, view group, test). Commits 1-4 predate the switch.
 - 2026-07-18 — New monitors set `next_check_at = now()` in the controller so the next scheduler
   tick checks them immediately; `is_active` toggle lives on the edit form only (create defaults
-  active). Group/channel selection on the monitor form is deferred to Phases 2-3.
+  active). Group selection on the monitor form is deferred to Phase 3.
+- 2026-07-18 — `AlertPayload` carries primitive arrays (not Eloquent models) so a queued
+  `SendAlert` serializes plain data and every sender reads the same facts. Sender resolution is a
+  match in the job (no extra factory), honoring the "three senders, no more seams" rule.
+- 2026-07-18 — `SendAlert` catches the sender's exception and re-throws a sanitized one
+  (no URL/secret; keeps HTTP status). The queue worker logs the thrown exception on every failed
+  attempt, so the original URL-bearing exception must never escape; `alert_failed` is recorded in
+  `failed()` after the final retry. Verified logs carry no channel URL or secret.
+- 2026-07-18 — Rollup buckets are grouped in PHP via Carbon `startOfHour`/`startOfDay` (no
+  DATE()/strftime()), upserted on (monitor_id, period, period_start) for idempotency. Daily avg
+  response time weights each hour's avg by its `checks_total` (per-hour responsive counts are not
+  stored, keeping the documented CheckRollup schema) — an approximation for the chart; totals and
+  uptime% stay exact. `uptime:prune` also drops daily rollups past `daily_retention_days` to fully
+  bound growth.
+- 2026-07-18 — Alert-channel type is immutable on edit (config shape can't drift); Slack/webhook
+  URLs and the webhook secret are never pre-filled — a blank field keeps the stored value.
+- 2026-07-18 — Blade gotcha logged: an inline `@endunless` (or any `@end*`) directly preceded by
+  a word character (e.g. `disabled@endunless`) is not compiled (its `\B@` regex needs a non-word
+  boundary), leaving the `if` unclosed. Use a `{{ ternary }}` for inline conditionals instead.
