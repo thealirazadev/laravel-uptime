@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreMonitorRequest;
 use App\Http\Requests\UpdateMonitorRequest;
+use App\Models\AlertChannel;
 use App\Models\Monitor;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +20,10 @@ class MonitorController extends Controller
 
     public function create(): View
     {
-        return view('monitors.create', ['monitor' => new Monitor]);
+        return view('monitors.create', [
+            'monitor' => new Monitor,
+            'channels' => AlertChannel::orderBy('name')->get(),
+        ]);
     }
 
     public function store(StoreMonitorRequest $request): RedirectResponse
@@ -29,6 +33,8 @@ class MonitorController extends Controller
         $monitor->next_check_at = now();
         $monitor->save();
 
+        $monitor->channels()->sync($request->validated('channels', []));
+
         return redirect()
             ->route('monitors.show', $monitor)
             ->with('status', 'Monitor created.');
@@ -36,7 +42,7 @@ class MonitorController extends Controller
 
     public function show(Monitor $monitor): View
     {
-        $monitor->load('group');
+        $monitor->load('group', 'channels');
         $checks = $monitor->checks()->latest('checked_at')->limit(20)->get();
         $incidents = $monitor->incidents()->latest('started_at')->limit(10)->get();
 
@@ -45,12 +51,16 @@ class MonitorController extends Controller
 
     public function edit(Monitor $monitor): View
     {
-        return view('monitors.edit', compact('monitor'));
+        return view('monitors.edit', [
+            'monitor' => $monitor,
+            'channels' => AlertChannel::orderBy('name')->get(),
+        ]);
     }
 
     public function update(UpdateMonitorRequest $request, Monitor $monitor): RedirectResponse
     {
         $monitor->update($request->validated());
+        $monitor->channels()->sync($request->validated('channels', []));
 
         return redirect()
             ->route('monitors.show', $monitor)

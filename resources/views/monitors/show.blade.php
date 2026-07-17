@@ -41,6 +41,22 @@
     </div>
 
     <div class="card">
+        <h2>Alert channels</h2>
+        @if ($monitor->channels->isEmpty())
+            <p class="meta">No channels attached. Edit the monitor to route alerts.</p>
+        @else
+            <ul>
+                @foreach ($monitor->channels as $channel)
+                    <li>
+                        {{ $channel->name }}
+                        <span class="meta">({{ ucfirst($channel->type) }}{{ $channel->is_enabled ? '' : ', disabled' }})</span>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </div>
+
+    <div class="card">
         <h2>Incidents</h2>
         @if ($incidents->isEmpty())
             <p class="empty">No incidents recorded.</p>

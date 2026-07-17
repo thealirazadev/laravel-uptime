@@ -35,6 +35,8 @@ class StoreMonitorRequest extends FormRequest
             'expected_status' => ['required', 'integer', 'between:100,599'],
             'expected_keyword' => ['nullable', 'string', 'max:255'],
             'confirmation_threshold' => ['required', 'integer', 'between:1,10'],
+            'channels' => ['array'],
+            'channels.*' => ['integer', 'exists:alert_channels,id'],
         ];
     }
 }

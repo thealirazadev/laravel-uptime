@@ -77,6 +77,27 @@
     @enderror
 </div>
 
+@isset($channels)
+    <fieldset>
+        <legend>Alert channels</legend>
+        @if ($channels->isEmpty())
+            <p class="hint">No channels yet. <a href="{{ route('channels.create') }}">Add a channel</a> to receive alerts for this monitor.</p>
+        @else
+            @php $selected = old('channels', $monitor->exists ? $monitor->channels->pluck('id')->all() : []); @endphp
+            @foreach ($channels as $channel)
+                <div class="checkbox-row">
+                    <input id="channel_{{ $channel->id }}" type="checkbox" name="channels[]" value="{{ $channel->id }}"
+                           @checked(in_array($channel->id, $selected))>
+                    <label for="channel_{{ $channel->id }}">
+                        {{ $channel->name }}
+                        <span class="meta">({{ ucfirst($channel->type) }}{{ $channel->is_enabled ? '' : ', disabled' }})</span>
+                    </label>
+                </div>
+            @endforeach
+        @endif
+    </fieldset>
+@endisset
+
 @if ($monitor->exists)
     <div class="checkbox-row">
         <input id="is_active" type="checkbox" name="is_active" value="1"

@@ -37,6 +37,8 @@ class UpdateMonitorRequest extends FormRequest
             'expected_keyword' => ['nullable', 'string', 'max:255'],
             'confirmation_threshold' => ['required', 'integer', 'between:1,10'],
             'is_active' => ['required', 'boolean'],
+            'channels' => ['array'],
+            'channels.*' => ['integer', 'exists:alert_channels,id'],
         ];
     }
 }
