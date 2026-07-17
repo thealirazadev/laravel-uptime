@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -20,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // whatever goes wrong, so machine clients get a stable contract.
         $exceptions->render(function (Throwable $e, Request $request) {
             if (! $request->is('status/*/json')) {
+                return null;
+            }
+
+            // Exceptions that already carry their own response (e.g. the throttle
+            // 429, which is a JSON envelope) pass straight through.
+            if ($e instanceof HttpResponseException) {
                 return null;
             }
 
