@@ -1,8 +1,11 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Every minute, claim due monitors and dispatch their checks. onOneServer keeps
+// multi-server cron from double-dispatching; withoutOverlapping stops a slow tick
+// from stacking on the next one. The per-row atomic claim is the real guarantee.
+Schedule::command('uptime:dispatch-checks')
+    ->everyMinute()
+    ->onOneServer()
+    ->withoutOverlapping();
