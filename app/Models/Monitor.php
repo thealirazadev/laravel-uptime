@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Jobs\SendAlert;
+use App\Support\Alerts\AlertPayload;
 use App\Support\CheckOutcome;
 use Database\Factories\MonitorFactory;
 use Illuminate\Database\Eloquent\Collection;
@@ -188,6 +190,11 @@ class Monitor extends Model
             'monitor_id' => $this->id,
             'incident_id' => $incident->id,
         ]);
+
+        // The only place open alerts fire: dedup is structural, not a flag.
+        foreach ($this->enabledChannels() as $channel) {
+            SendAlert::dispatch($channel->id, AlertPayload::incidentOpened($this, $incident), $incident->id);
+        }
     }
 
     /** Close the open incident on recovery and log it. */
@@ -209,5 +216,10 @@ class Monitor extends Model
             'monitor_id' => $this->id,
             'incident_id' => $incident->id,
         ]);
+
+        // The only place recovery alerts fire.
+        foreach ($this->enabledChannels() as $channel) {
+            SendAlert::dispatch($channel->id, AlertPayload::incidentClosed($this, $incident), $incident->id);
+        }
     }
 }
