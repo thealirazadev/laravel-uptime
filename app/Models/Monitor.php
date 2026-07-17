@@ -132,6 +132,59 @@ class Monitor extends Model
     }
 
     /**
+     * Uptime percentage over a window, derived from rollups (never raw scans).
+     * Returns null when the window has no rollup data yet.
+     */
+    public function uptimePercentage(string $window): ?float
+    {
+        $rollups = $this->rollupsForWindow($window);
+
+        if ($rollups->isEmpty()) {
+            return null;
+        }
+
+        $total = (int) $rollups->sum('checks_total');
+
+        if ($total === 0) {
+            return null;
+        }
+
+        $failed = (int) $rollups->sum('checks_failed');
+
+        return round((1 - $failed / $total) * 100, 2);
+    }
+
+    /** Average response time over the last 24 h from hourly rollups, or null. */
+    public function avgResponseTimeDay(): ?int
+    {
+        $rollups = $this->rollupsForWindow('day')->whereNotNull('avg_response_time_ms');
+        $weight = (int) $rollups->sum('checks_total');
+
+        if ($weight === 0) {
+            return null;
+        }
+
+        return (int) round($rollups->sum(fn (CheckRollup $r) => $r->avg_response_time_ms * $r->checks_total) / $weight);
+    }
+
+    /**
+     * @return Collection<int, CheckRollup>
+     */
+    protected function rollupsForWindow(string $window): Collection
+    {
+        [$period, $since] = match ($window) {
+            'day' => ['hour', now()->subDay()],
+            'week' => ['day', now()->subDays(7)],
+            'month' => ['day', now()->subDays(30)],
+        };
+
+        return $this->rollups()
+            ->where('period', $period)
+            ->where('period_start', '>=', $since)
+            ->get(['checks_total', 'checks_failed', 'avg_response_time_ms']);
+    }
+
+    /**
      * The confirmation-threshold state machine. Called once per completed check,
      * inside the per-monitor overlap lock, so counters never interleave.
      *

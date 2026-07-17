@@ -6,9 +6,13 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\MonitorController;
 use App\Http\Controllers\MonitorGroupController;
+use App\Http\Controllers\StatusPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
+
+// Public, unauthenticated status page for a monitor group.
+Route::get('/status/{slug}', [StatusPageController::class, 'show'])->name('status.show');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'show'])->name('login');
