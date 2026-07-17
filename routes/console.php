@@ -14,3 +14,21 @@ Schedule::command('uptime:dispatch-checks')
 Schedule::command('uptime:dispatch-ssl')
     ->dailyAt('03:00')
     ->onOneServer();
+
+// Roll completed hours up continuously.
+Schedule::command('uptime:rollup hour')
+    ->hourlyAt(5)
+    ->onOneServer()
+    ->withoutOverlapping();
+
+// Daily maintenance, strictly ordered: roll the day up, then prune. The prune
+// runs after the daily rollup so nothing is deleted before it is aggregated.
+Schedule::command('uptime:rollup day')
+    ->dailyAt('00:15')
+    ->onOneServer()
+    ->withoutOverlapping();
+
+Schedule::command('uptime:prune')
+    ->dailyAt('00:20')
+    ->onOneServer()
+    ->withoutOverlapping();
