@@ -7,25 +7,47 @@ use App\Models\Monitor;
 use App\Models\MonitorGroup;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class StatusPageController extends Controller
 {
     public function show(string $slug): View
     {
-        $group = $this->publicGroupOrAbort($slug);
-
-        return view('status.show', ['status' => $this->statusData($group)]);
-    }
-
-    protected function publicGroupOrAbort(string $slug): MonitorGroup
-    {
-        // Identical 404 for unknown and non-public slugs: existence is not leaked.
-        $group = MonitorGroup::query()->where('slug', $slug)->where('is_public', true)->first();
+        $group = $this->findPublicGroup($slug);
 
         abort_if($group === null, 404);
 
-        return $group;
+        return view('status.show', ['status' => $this->cachedStatusData($group)]);
+    }
+
+    public function json(string $slug): JsonResponse
+    {
+        $group = $this->findPublicGroup($slug);
+
+        if ($group === null) {
+            // Identical body for unknown and non-public: existence is not leaked.
+            return response()->json([
+                'error' => ['code' => 'not_found', 'message' => 'Status page not found.'],
+            ], 404);
+        }
+
+        return response()->json(['data' => $this->cachedStatusData($group)]);
+    }
+
+    protected function findPublicGroup(string $slug): ?MonitorGroup
+    {
+        return MonitorGroup::query()->where('slug', $slug)->where('is_public', true)->first();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function cachedStatusData(MonitorGroup $group): array
+    {
+        // ~60 s cache shared by the HTML page and the JSON twin.
+        return Cache::remember("status_page:{$group->id}", 60, fn () => $this->statusData($group));
     }
 
     /**
