@@ -5,7 +5,6 @@ use App\Models\AlertChannel;
 use App\Models\Incident;
 use App\Models\Monitor;
 use App\Support\Alerts\AlertPayload;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 it('delivers via the webhook sender and records an alert_sent event', function () {
@@ -42,18 +41,25 @@ it('skips a disabled channel without sending', function () {
     expect($incident->events()->count())->toBe(0);
 });
 
-it('throws so the queue retries when delivery fails', function () {
+it('throws a sanitized exception so the queue retries without leaking the url', function () {
     Http::fake(['*' => Http::response('', 500)]);
 
     $channel = AlertChannel::factory()->create([
         'type' => 'webhook',
-        'config' => ['url' => 'https://hook.example/x'],
+        'config' => ['url' => 'https://secret-hook.example/x', 'secret' => 'topsecret'],
     ]);
     $monitor = Monitor::factory()->create();
     $incident = Incident::factory()->for($monitor)->create();
 
-    expect(fn () => (new SendAlert($channel->id, AlertPayload::incidentOpened($monitor, $incident), $incident->id))->handle())
-        ->toThrow(RequestException::class);
+    try {
+        (new SendAlert($channel->id, AlertPayload::incidentOpened($monitor, $incident), $incident->id))->handle();
+        $this->fail('Expected the job to throw.');
+    } catch (Throwable $e) {
+        expect($e)->toBeInstanceOf(RuntimeException::class);
+        expect($e->getMessage())->not->toContain('secret-hook.example');
+        expect($e->getMessage())->not->toContain('topsecret');
+        expect($e->getMessage())->toContain('HTTP 500');
+    }
 });
 
 it('records alert_failed on the final failure', function () {

@@ -16,6 +16,7 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Throwable;
 
 class SendAlert implements ShouldQueue
@@ -42,7 +43,18 @@ class SendAlert implements ShouldQueue
             return;
         }
 
-        $this->senderFor($channel->type)->send($channel, $this->payload);
+        try {
+            $this->senderFor($channel->type)->send($channel, $this->payload);
+        } catch (Throwable $e) {
+            // Re-throw with a message free of the channel URL/secret. The queue
+            // worker logs the thrown exception on every failed attempt, so the
+            // original (URL-bearing) exception must never escape this method.
+            $status = $e instanceof RequestException ? $e->response->status() : null;
+
+            throw new RuntimeException(
+                'Alert delivery failed'.($status ? " (HTTP {$status})" : '')." for channel #{$channel->id}."
+            );
+        }
 
         $this->recordEvent('alert_sent', 'Alert sent via '.ucfirst($channel->type)." ({$channel->name}).");
         Log::info('alert.sent', [
@@ -59,12 +71,11 @@ class SendAlert implements ShouldQueue
 
         $this->recordEvent('alert_failed', "Alert failed via {$label}.");
 
-        // Log the class and HTTP status only: never the webhook URL or secret.
+        // The reason is the sanitized message from handle(): never a URL or secret.
         Log::warning('alert.send_failed', [
             'channel_id' => $this->channelId,
             'event' => $this->payload->event,
-            'exception' => $exception ? $exception::class : null,
-            'status' => $exception instanceof RequestException ? $exception->response->status() : null,
+            'reason' => $exception?->getMessage(),
         ]);
     }
 
