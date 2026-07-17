@@ -9,3 +9,8 @@ Schedule::command('uptime:dispatch-checks')
     ->everyMinute()
     ->onOneServer()
     ->withoutOverlapping();
+
+// Daily SSL expiry sweep for active https monitors.
+Schedule::command('uptime:dispatch-ssl')
+    ->dailyAt('03:00')
+    ->onOneServer();
