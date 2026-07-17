@@ -19,6 +19,31 @@ class AlertChannel extends Model
         'is_enabled',
     ];
 
+    /**
+     * Config keys stored for a channel type. `secret` (webhook) is optional.
+     *
+     * @return list<string>
+     */
+    public static function configKeys(string $type): array
+    {
+        return match ($type) {
+            'mail' => ['to'],
+            'slack' => ['webhook_url'],
+            'webhook' => ['url', 'secret'],
+            default => [],
+        };
+    }
+
+    /** Config keys that are secrets and must be masked when redisplayed. */
+    public static function secretKeys(string $type): array
+    {
+        return match ($type) {
+            'slack' => ['webhook_url'],
+            'webhook' => ['url', 'secret'],
+            default => [],
+        };
+    }
+
     protected function casts(): array
     {
         return [
