@@ -21,6 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('monitors', MonitorController::class);
 
     Route::resource('channels', AlertChannelController::class)->except(['show']);
+    Route::post('/channels/{channel}/test', [AlertChannelController::class, 'test'])->name('channels.test');
 
     Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
     Route::get('/incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');

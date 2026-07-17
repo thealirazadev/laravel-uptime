@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAlertChannelRequest;
 use App\Http\Requests\UpdateAlertChannelRequest;
+use App\Jobs\SendAlert;
 use App\Models\AlertChannel;
+use App\Support\Alerts\AlertPayload;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -67,6 +69,17 @@ class AlertChannelController extends Controller
         $channel->delete();
 
         return redirect()->route('channels.index')->with('status', 'Alert channel deleted.');
+    }
+
+    public function test(AlertChannel $channel): RedirectResponse
+    {
+        if (! $channel->is_enabled) {
+            return back()->with('error', 'This channel is disabled. Enable it before sending a test.');
+        }
+
+        SendAlert::dispatch($channel->id, AlertPayload::test());
+
+        return back()->with('status', 'Test alert queued. Check the channel.');
     }
 
     /**
