@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\MonitorController;
+use App\Http\Controllers\MonitorGroupController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
@@ -22,6 +23,9 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('channels', AlertChannelController::class)->except(['show']);
     Route::post('/channels/{channel}/test', [AlertChannelController::class, 'test'])->name('channels.test');
+
+    Route::resource('groups', MonitorGroupController::class)->except(['show'])
+        ->parameters(['groups' => 'group']);
 
     Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
     Route::get('/incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
