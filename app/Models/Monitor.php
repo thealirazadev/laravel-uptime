@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Support\CheckOutcome;
 use Database\Factories\MonitorFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Log;
 
 class Monitor extends Model
 {
@@ -96,5 +98,51 @@ class Monitor extends Model
     public function isHttps(): bool
     {
         return str_starts_with(strtolower($this->url), 'https://');
+    }
+
+    /**
+     * The confirmation-threshold state machine. Called once per completed check,
+     * inside the per-monitor overlap lock, so counters never interleave.
+     *
+     * Counters are mutually resetting; status flips only when a streak reaches the
+     * confirmation threshold. up|unknown -> down and (down|unknown) -> up are the
+     * only transitions, and unknown -> up is silent (no incident, no alert).
+     */
+    public function applyCheckResult(CheckOutcome $outcome): void
+    {
+        $this->last_checked_at = now();
+
+        if ($outcome->ok) {
+            $this->consecutive_successes++;
+            $this->consecutive_failures = 0;
+            $this->first_failed_at = null;
+            $this->last_error = null;
+
+            if ($this->status !== 'up' && $this->consecutive_successes >= $this->confirmation_threshold) {
+                $wasDown = $this->status === 'down';
+                $this->status = 'up';
+
+                if ($wasDown) {
+                    Log::info('monitor.up', ['monitor_id' => $this->id]);
+                }
+            }
+        } else {
+            $this->consecutive_failures++;
+            $this->consecutive_successes = 0;
+            $this->last_error = $outcome->error;
+
+            if ($this->consecutive_failures === 1) {
+                // Remember when the failing streak began; this becomes the
+                // incident's started_at, not the moment it was confirmed.
+                $this->first_failed_at = now();
+            }
+
+            if ($this->status !== 'down' && $this->consecutive_failures >= $this->confirmation_threshold) {
+                $this->status = 'down';
+                Log::warning('monitor.down', ['monitor_id' => $this->id]);
+            }
+        }
+
+        $this->save();
     }
 }
