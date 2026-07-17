@@ -4,9 +4,11 @@ namespace App\Models;
 
 use App\Support\CheckOutcome;
 use Database\Factories\MonitorFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Log;
 
@@ -87,6 +89,24 @@ class Monitor extends Model
     public function incidents(): HasMany
     {
         return $this->hasMany(Incident::class);
+    }
+
+    /**
+     * @return BelongsToMany<AlertChannel, $this>
+     */
+    public function channels(): BelongsToMany
+    {
+        return $this->belongsToMany(AlertChannel::class, 'alert_channel_monitor');
+    }
+
+    /**
+     * Enabled channels attached to this monitor: the exact set an alert fans out to.
+     *
+     * @return Collection<int, AlertChannel>
+     */
+    public function enabledChannels(): Collection
+    {
+        return $this->channels()->where('is_enabled', true)->get();
     }
 
     /** The currently open incident for this monitor, if any. */
