@@ -6,6 +6,7 @@ use App\Http\Requests\StoreMonitorRequest;
 use App\Http\Requests\UpdateMonitorRequest;
 use App\Models\AlertChannel;
 use App\Models\Monitor;
+use App\Models\MonitorGroup;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -23,6 +24,7 @@ class MonitorController extends Controller
         return view('monitors.create', [
             'monitor' => new Monitor,
             'channels' => AlertChannel::orderBy('name')->get(),
+            'groups' => MonitorGroup::orderBy('name')->get(),
         ]);
     }
 
@@ -54,6 +56,7 @@ class MonitorController extends Controller
         return view('monitors.edit', [
             'monitor' => $monitor,
             'channels' => AlertChannel::orderBy('name')->get(),
+            'groups' => MonitorGroup::orderBy('name')->get(),
         ]);
     }
 

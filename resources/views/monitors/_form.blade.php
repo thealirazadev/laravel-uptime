@@ -19,6 +19,24 @@
     @enderror
 </div>
 
+@isset($groups)
+    <div class="field @error('monitor_group_id') field-error @enderror">
+        <label for="monitor_group_id">Group (optional)</label>
+        <p class="hint">Groups get a shared public status page.</p>
+        <select id="monitor_group_id" name="monitor_group_id">
+            <option value="">No group</option>
+            @foreach ($groups as $group)
+                <option value="{{ $group->id }}" @selected((int) old('monitor_group_id', $monitor->monitor_group_id) === $group->id)>
+                    {{ $group->name }}
+                </option>
+            @endforeach
+        </select>
+        @error('monitor_group_id')
+            <p class="error-message">{{ $message }}</p>
+        @enderror
+    </div>
+@endisset
+
 <div class="field @error('interval_seconds') field-error @enderror">
     <label for="interval_seconds">Check interval</label>
     <select id="interval_seconds" name="interval_seconds"

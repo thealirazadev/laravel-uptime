@@ -29,6 +29,7 @@ class StoreMonitorRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'monitor_group_id' => ['nullable', 'integer', 'exists:monitor_groups,id'],
             'url' => ['required', 'string', 'max:2048', 'url:http,https'],
             'interval_seconds' => ['required', 'integer', Rule::in(Monitor::INTERVALS)],
             'timeout_seconds' => ['required', 'integer', 'between:1,30'],
