@@ -122,8 +122,12 @@ class Monitor extends Model
                 $wasDown = $this->status === 'down';
                 $this->status = 'up';
 
+                // down -> up closes the incident; unknown -> up is silent.
                 if ($wasDown) {
-                    Log::info('monitor.up', ['monitor_id' => $this->id]);
+                    $this->save();
+                    $this->closeIncident();
+
+                    return;
                 }
             }
         } else {
@@ -139,10 +143,51 @@ class Monitor extends Model
 
             if ($this->status !== 'down' && $this->consecutive_failures >= $this->confirmation_threshold) {
                 $this->status = 'down';
-                Log::warning('monitor.down', ['monitor_id' => $this->id]);
+                $this->save();
+                $this->openIncidentRecord();
+
+                return;
             }
         }
 
         $this->save();
+    }
+
+    /** Open the single incident for the current down transition and log it. */
+    protected function openIncidentRecord(): void
+    {
+        Log::warning('monitor.down', ['monitor_id' => $this->id]);
+
+        $incident = $this->incidents()->create([
+            'started_at' => $this->first_failed_at ?? now(),
+            'summary' => $this->last_error,
+        ]);
+        $incident->recordEvent('opened', 'Incident opened: '.($this->last_error ?? 'check failed').'.');
+
+        Log::warning('incident.opened', [
+            'monitor_id' => $this->id,
+            'incident_id' => $incident->id,
+        ]);
+    }
+
+    /** Close the open incident on recovery and log it. */
+    protected function closeIncident(): void
+    {
+        Log::info('monitor.up', ['monitor_id' => $this->id]);
+
+        $incident = $this->openIncident();
+
+        if ($incident === null) {
+            return;
+        }
+
+        $incident->closed_at = now();
+        $incident->save();
+        $incident->recordEvent('closed', 'Monitor recovered.');
+
+        Log::info('incident.closed', [
+            'monitor_id' => $this->id,
+            'incident_id' => $incident->id,
+        ]);
     }
 }
