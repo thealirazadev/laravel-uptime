@@ -16,6 +16,22 @@ class Monitor extends Model
     /** Allowed check intervals in seconds; the only values the form accepts. */
     public const INTERVALS = [60, 300, 900, 1800, 3600];
 
+    /**
+     * Interval values mapped to human labels for the monitor form.
+     *
+     * @return array<int, string>
+     */
+    public static function intervalOptions(): array
+    {
+        return [
+            60 => 'Every minute',
+            300 => 'Every 5 minutes',
+            900 => 'Every 15 minutes',
+            1800 => 'Every 30 minutes',
+            3600 => 'Every 60 minutes',
+        ];
+    }
+
     protected $fillable = [
         'monitor_group_id',
         'name',
