@@ -12,12 +12,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn () => redirect()->route('dashboard'));
 
 // Public, unauthenticated status page for a monitor group (HTML + JSON twin).
-Route::get('/status/{slug}', [StatusPageController::class, 'show'])->name('status.show');
-Route::get('/status/{slug}/json', [StatusPageController::class, 'json'])->name('status.json');
+Route::middleware('throttle:status')->group(function () {
+    Route::get('/status/{slug}', [StatusPageController::class, 'show'])->name('status.show');
+    Route::get('/status/{slug}/json', [StatusPageController::class, 'json'])->name('status.json');
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'show'])->name('login');
-    Route::post('/login', [LoginController::class, 'store']);
+    Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:login');
 });
 
 Route::middleware('auth')->group(function () {
