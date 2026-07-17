@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateMonitorRequest;
 use App\Models\AlertChannel;
 use App\Models\Monitor;
 use App\Models\MonitorGroup;
+use App\Support\Chart;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -48,7 +49,16 @@ class MonitorController extends Controller
         $checks = $monitor->checks()->latest('checked_at')->limit(20)->get();
         $incidents = $monitor->incidents()->latest('started_at')->limit(10)->get();
 
-        return view('monitors.show', compact('monitor', 'checks', 'incidents'));
+        $hourly = $monitor->rollups()->where('period', 'hour')->where('period_start', '>=', now()->subDay())->get();
+        $daily = $monitor->rollups()->where('period', 'day')->where('period_start', '>=', now()->subDays(30))->get();
+
+        $charts = [
+            'response_day' => Chart::responseTime($hourly, '24 hours'),
+            'response_month' => Chart::responseTime($daily, '30 days'),
+            'uptime_month' => Chart::uptimeBar($daily, '30 days'),
+        ];
+
+        return view('monitors.show', compact('monitor', 'checks', 'incidents', 'charts'));
     }
 
     public function edit(Monitor $monitor): View

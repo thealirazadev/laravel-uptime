@@ -55,6 +55,17 @@
     </div>
 
     <div class="card">
+        <h2>Response time &amp; uptime</h2>
+        <h3 style="font-size:0.875rem; color:var(--text-muted); margin-bottom:4px">Response time, last 24 hours</h3>
+        {{-- Chart output interpolates only computed numbers; safe to render unescaped. --}}
+        {!! $charts['response_day'] !!}
+        <h3 style="font-size:0.875rem; color:var(--text-muted); margin:16px 0 4px">Response time, last 30 days</h3>
+        {!! $charts['response_month'] !!}
+        <h3 style="font-size:0.875rem; color:var(--text-muted); margin:16px 0 4px">Uptime, last 30 days</h3>
+        {!! $charts['uptime_month'] !!}
+    </div>
+
+    <div class="card">
         <h2>Alert channels</h2>
         @if ($monitor->channels->isEmpty())
             <p class="meta">No channels attached. Edit the monitor to route alerts.</p>
