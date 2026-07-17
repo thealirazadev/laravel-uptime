@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Jobs\SendAlert;
 use App\Support\Alerts\AlertPayload;
 use App\Support\CheckOutcome;
+use Carbon\CarbonInterface;
 use Database\Factories\MonitorFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -195,6 +196,53 @@ class Monitor extends Model
         foreach ($this->enabledChannels() as $channel) {
             SendAlert::dispatch($channel->id, AlertPayload::incidentOpened($this, $incident), $incident->id);
         }
+    }
+
+    /** Whole days from now until the given expiry; negative once expired. */
+    public static function sslDaysLeft(CarbonInterface $expiresAt): int
+    {
+        return (int) floor(($expiresAt->getTimestamp() - now()->getTimestamp()) / 86400);
+    }
+
+    /**
+     * SSL warning threshold logic. Stores the expiry and returns the threshold to
+     * warn at (30/14/7/0), or null when no new warning is due. Monotonic: one
+     * warning per threshold per certificate; a later expiry (renewal) re-arms.
+     */
+    public function applySslResult(CarbonInterface $expiresAt): ?int
+    {
+        $this->ssl_checked_at = now();
+
+        // A renewal (expiry moved later than what we recorded) resets the watermark.
+        if ($this->ssl_expires_at !== null && $expiresAt->greaterThan($this->ssl_expires_at)) {
+            $this->ssl_notified_days = null;
+        }
+
+        $this->ssl_expires_at = $expiresAt;
+
+        $daysLeft = static::sslDaysLeft($expiresAt);
+
+        // Ascending thresholds including the implicit expiry threshold 0.
+        $thresholds = collect(config('uptime.ssl_warn_days'))
+            ->push(0)
+            ->unique()
+            ->sort()
+            ->values();
+
+        // Smallest threshold the certificate has crossed into.
+        $crossed = $thresholds->first(fn (int $t) => $daysLeft <= $t);
+
+        // Warn only when moving into a tighter (smaller) threshold than last time.
+        if ($crossed !== null && ($this->ssl_notified_days === null || $this->ssl_notified_days > $crossed)) {
+            $this->ssl_notified_days = $crossed;
+            $this->save();
+
+            return $crossed;
+        }
+
+        $this->save();
+
+        return null;
     }
 
     /** Close the open incident on recovery and log it. */
