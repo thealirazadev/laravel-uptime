@@ -1,0 +1,91 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StoreMonitorRequest;
+use App\Http\Requests\UpdateMonitorRequest;
+use App\Models\AlertChannel;
+use App\Models\Monitor;
+use App\Models\MonitorGroup;
+use App\Support\Chart;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
+
+class MonitorController extends Controller
+{
+    public function index(): View
+    {
+        $monitors = Monitor::orderBy('name')->get();
+
+        return view('monitors.index', compact('monitors'));
+    }
+
+    public function create(): View
+    {
+        return view('monitors.create', [
+            'monitor' => new Monitor,
+            'channels' => AlertChannel::orderBy('name')->get(),
+            'groups' => MonitorGroup::orderBy('name')->get(),
+        ]);
+    }
+
+    public function store(StoreMonitorRequest $request): RedirectResponse
+    {
+        $monitor = new Monitor($request->validated());
+        // New monitors are due immediately so the next scheduler tick checks them.
+        $monitor->next_check_at = now();
+        $monitor->save();
+
+        $monitor->channels()->sync($request->validated('channels', []));
+
+        return redirect()
+            ->route('monitors.show', $monitor)
+            ->with('status', 'Monitor created.');
+    }
+
+    public function show(Monitor $monitor): View
+    {
+        $monitor->load('group', 'channels');
+        $checks = $monitor->checks()->latest('checked_at')->limit(20)->get();
+        $incidents = $monitor->incidents()->latest('started_at')->limit(10)->get();
+
+        $hourly = $monitor->rollups()->where('period', 'hour')->where('period_start', '>=', now()->subDay())->get();
+        $daily = $monitor->rollups()->where('period', 'day')->where('period_start', '>=', now()->subDays(30))->get();
+
+        $charts = [
+            'response_day' => Chart::responseTime($hourly, '24 hours'),
+            'response_month' => Chart::responseTime($daily, '30 days'),
+            'uptime_month' => Chart::uptimeBar($daily, '30 days'),
+        ];
+
+        return view('monitors.show', compact('monitor', 'checks', 'incidents', 'charts'));
+    }
+
+    public function edit(Monitor $monitor): View
+    {
+        return view('monitors.edit', [
+            'monitor' => $monitor,
+            'channels' => AlertChannel::orderBy('name')->get(),
+            'groups' => MonitorGroup::orderBy('name')->get(),
+        ]);
+    }
+
+    public function update(UpdateMonitorRequest $request, Monitor $monitor): RedirectResponse
+    {
+        $monitor->update($request->validated());
+        $monitor->channels()->sync($request->validated('channels', []));
+
+        return redirect()
+            ->route('monitors.show', $monitor)
+            ->with('status', 'Monitor updated.');
+    }
+
+    public function destroy(Monitor $monitor): RedirectResponse
+    {
+        $monitor->delete();
+
+        return redirect()
+            ->route('monitors.index')
+            ->with('status', 'Monitor deleted.');
+    }
+}
