@@ -28,9 +28,18 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   / 286 assertions; `pint --test` clean. End-to-end webhook-failure run confirmed the webhook URL
   and secret never reach the logs.
 
+- 2026-07-18 — Phase 3 complete. Monitor group CRUD with kebab slugs (auto-derived, unique) and
+  group assignment on the monitor form; public status page (HTML) and JSON twin sharing one cached
+  (~60 s) data builder, identical 404 for unknown/non-public slugs, no URL/operator/error leakage;
+  `Support/Chart` inline-SVG response-time and uptime charts on the monitor detail (rollup-backed,
+  accessible, honest empty state); login (5/min) and status (60/min) IP throttling with the JSON
+  error envelope on 429; custom 404/429/500 pages and a status-JSON error envelope. Full suite
+  green: 135 tests / 497 assertions; `pint --test` clean. Status/error pages verified over HTTP for
+  landmarks, lang, viewport, and zero URL leakage.
+
 ## In progress
 
-- Phase 3 next: public status pages (HTML + JSON), rollup-backed charts, throttling, error pages.
+- Final verification (MySQL sanity pass) then hand-off.
 
 ## Decisions log
 
@@ -87,3 +96,15 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
 - 2026-07-18 — Blade gotcha logged: an inline `@endunless` (or any `@end*`) directly preceded by
   a word character (e.g. `disabled@endunless`) is not compiled (its `\B@` regex needs a non-word
   boundary), leaving the `if` unclosed. Use a `{{ ternary }}` for inline conditionals instead.
+- 2026-07-18 — Status page HTML and JSON share one cached data array so they never diverge; caching
+  keyed by group id, ~60 s. Uptime% is derived at read time from rollups (hourly for 24 h, daily
+  for 7/30 d), never stored; null when a window has no rollup data. Monitor URLs are never emitted
+  on the public surfaces.
+- 2026-07-18 — Rate limiting via named limiters in AppServiceProvider: `login` 5/min per IP,
+  `status` 60/min per IP shared by HTML+JSON (JSON 429 returns the `rate_limited` envelope, HTML
+  returns the 429 view). Gotcha logged: a global `render()` callback runs BEFORE the framework's
+  `HttpResponseException` branch, so it must return null for `HttpResponseException` (which wraps
+  the throttle's own 429 response) or it clobbers throttle/redirect responses into 500s.
+- 2026-07-18 — Charts are pure inline SVG from `Support/Chart`, interpolating only computed
+  numbers, rendered with `{!! !!}` (the one sanctioned unescaped output); failures are marked by
+  position/marker, not colour alone; brand-new monitors render a "Not enough data yet" state.
