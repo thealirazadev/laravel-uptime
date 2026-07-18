@@ -37,9 +37,14 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   green: 135 tests / 497 assertions; `pint --test` clean. Status/error pages verified over HTTP for
   landmarks, lang, viewport, and zero URL leakage.
 
+- 2026-07-18 — MySQL 8 sanity pass done: migrations apply cleanly and the full suite (135 tests /
+  497 assertions) passes against MySQL 8.4 as well as SQLite. Portability holds (PHP-side rollup
+  bucketing, standard-SQL ordering, upserts, and the conditional-UPDATE claim behave identically).
+
 ## In progress
 
-- Final verification (MySQL sanity pass) then hand-off.
+- None. v1 implementation complete across all three phases; remaining items are the human-only
+  production steps in docs/launch-checklist.md.
 
 ## Decisions log
 
