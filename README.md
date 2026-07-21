@@ -118,6 +118,28 @@ The trade-offs below are the load-bearing ones; the full rationale lives in
   incident records a raw check row and nothing else. There is no "already alerted" flag to keep in
   sync because there is only one code path that can emit an incident alert.
 
+## Benchmark
+
+Rollups are the app's heaviest batch job: the hourly command scans a monitor's raw `checks` rows
+(the write-hot table) and aggregates them in PHP. The numbers below come from
+`benchmarks/rollup_benchmark.php`, which seeds a throwaway SQLite database and times each rollup
+command; re-run it locally with `php benchmarks/rollup_benchmark.php [monitors] [days] [per_hour]`.
+
+Measured on a 12th Gen Intel Core i5-1235U (12 threads), 31 GB RAM, PHP 8.2.29, SQLite 3.37.2
+(`journal_mode=MEMORY`, `synchronous=OFF`), single run each, machine otherwise loaded:
+
+| Raw `checks` rows | Monitors × days | `rollup hour` | `rollup day` | Peak memory |
+|---|---|---:|---:|---:|
+| 216,000 | 50 × 3 | ~7.2 s | ~0.15 s | 126 MB |
+| 504,000 | 50 × 7 | ~16.7 s | ~0.37 s | 152 MB |
+| 1,008,000 | 100 × 7 | ~44.5 s | ~0.84 s | 152 MB |
+
+The hourly rollup cost tracks raw row volume, which is exactly why raw checks are pruned after 7
+days by default and why every dashboard, status page, and uptime figure reads from rollups rather
+than scanning raw rows. The daily rollup works from the compact hourly rows and stays well under a
+second even at a million raw checks. Runs above the default 128 MB `memory_limit` need the raised
+limit the script sets for itself.
+
 ## License
 
 License: MIT
