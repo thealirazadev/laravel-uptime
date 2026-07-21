@@ -125,3 +125,18 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   delivery, long-running scheduler/worker observation, a11y review) — they need real services or
   human judgment. No migration step either: `phpunit.xml` pins the suite to in-memory SQLite and
   `RefreshDatabase` builds the schema, so no database file is created in CI.
+- 2026-07-22 — Security upgrade pass. Owner explicitly approved breaking majors, which unblocked
+  the Laravel 11 → 12 move that the 2026-07-18 entry had deferred. Cleared all 5 open Dependabot
+  alerts: guzzlehttp/guzzle 7.15.0 → 7.15.1 (3 medium: host-only cookie scope, unbounded response
+  cookies, URI fragments in redirect Referer headers) and laravel/framework 11.55.0 → 12.64.0
+  (1 high CRLF injection in the default email rule, fixed only in 12.60.0+; 1 medium temporary
+  signed URL path confusion, fixed only in 12.61.1+ — neither has an 11.x patch, so the major was
+  the only route). The 11 → 12 upgrade needed no application code and no config changes: the app
+  uses none of the breaking surfaces (no `HasUuids`, no `Concurrency::run`, no `image` validation
+  rule, no `Schema::getTables()`, no `mergeIfMissing`, and `config/filesystems.php` already
+  defines the `local` disk explicitly with the 12.x root and `serve`). Carbon was already on 3.x.
+  Laravel 12 still requires PHP ^8.2, so the CI matrix stays on 8.2. Dev tooling was already at
+  Laravel-12-compatible versions and was left untouched (pest 3.8.7 allows ^12.9.2, collision
+  8.9.5, phpunit 11.5.56 — the upgrade guide asks for exactly these lines). 137 tests still pass,
+  pint clean, `composer audit` reports zero advisories. laravel/tinker 3.0.2 exists but is a
+  non-security major with no advisory against 2.11.1, so it stays pinned.
