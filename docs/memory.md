@@ -41,6 +41,13 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   497 assertions) passes against MySQL 8.4 as well as SQLite. Portability holds (PHP-side rollup
   bucketing, standard-SQL ordering, upserts, and the conditional-UPDATE claim behave identically).
 
+- 2026-07-22 — Repo housekeeping: added root `LICENSE` (MIT, matching `composer.json`) and
+  `.github/workflows/ci.yml`. CI runs on push and pull_request to `main`: PHP 8.2 via
+  `shivammathur/setup-php@v2`, cached composer downloads, `composer install --prefer-dist
+  --no-progress`, `cp .env.example .env`, `php artisan key:generate`, then the two gate commands
+  from docs/testing.md in their documented order — `./vendor/bin/pint --test` and
+  `php artisan test`. Verified first against a clean clone locally.
+
 ## In progress
 
 - None. v1 implementation complete across all three phases; remaining items are the human-only
@@ -113,3 +120,8 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
 - 2026-07-18 — Charts are pure inline SVG from `Support/Chart`, interpolating only computed
   numbers, rendered with `{!! !!}` (the one sanctioned unescaped output); failures are marked by
   position/marker, not colour alone; brand-new monitors render a "Not enough data yet" state.
+- 2026-07-22 — CI runs only the two automated gates from docs/testing.md. Deliberately out of
+  scope: the MySQL 8 sanity pass and the rest of docs/testing.md "Manual QA only" (real SMTP/Slack
+  delivery, long-running scheduler/worker observation, a11y review) — they need real services or
+  human judgment. No migration step either: `phpunit.xml` pins the suite to in-memory SQLite and
+  `RefreshDatabase` builds the schema, so no database file is created in CI.
