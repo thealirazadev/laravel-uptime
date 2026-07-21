@@ -14,7 +14,7 @@ expiry, rollups/retention, public status pages).
 
 ## Planned stack
 
-- PHP 8.2+ / Laravel 11.x
+- PHP 8.2+ / Laravel 12.x
 - Blade + minimal server-rendered SVG charts (no SPA, no JS framework)
 - SQLite for local development, MySQL 8.x in production
 - Laravel scheduler + database queue driver (no Redis dependency)

@@ -202,10 +202,11 @@ tests/
 
 ## Tech stack with rationale
 
-- **Laravel 11.x (PHP 8.2+)** — same major versions as `laravel-shortlink`; scheduler, queues,
-  HTTP client, mail, atomic cache locks, and job middleware are all first-party, which is exactly
-  the surface this app needs. Exact versions are pinned at install time and `composer.lock` is
-  committed.
+- **Laravel 12.x (PHP 8.2+)** — scheduler, queues, HTTP client, mail, atomic cache locks, and job
+  middleware are all first-party, which is exactly the surface this app needs. Exact versions are
+  pinned at install time and `composer.lock` is committed. Originally built on 11.x; moved to 12.x
+  because the security fixes for the framework advisories this app was exposed to ship only on the
+  12.x line. The 11 → 12 upgrade required no application code changes.
 - **Database queue driver + database cache/session stores** — one moving part (the database)
   instead of two. Trade-off: lower throughput and lock granularity than Redis, irrelevant at
   hundreds of monitors (a 1-minute tick dispatches at most `monitor_count` small jobs). The
@@ -350,7 +351,7 @@ Relationships: `belongsToMany(Monitor)` via `alert_channel_monitor`
 at rest via the cast (requires `APP_KEY`), masked in the edit form, never logged.
 
 ### Framework tables
-`users`, `sessions`, `cache`, `cache_locks`, `jobs`, `failed_jobs` from the standard Laravel 11
+`users`, `sessions`, `cache`, `cache_locks`, `jobs`, `failed_jobs` from the standard Laravel
 migration set. `cache_locks` is load-bearing (overlap locks, `onOneServer`).
 
 ## Where state lives
