@@ -100,3 +100,29 @@ it('honors the threshold edge N-1 versus N', function () {
     $monitor->applyCheckResult(fail());
     expect($monitor->status)->toBe('down');
 });
+
+it('bounds the success streak counter so a long-lived up monitor never overflows its column', function () {
+    // consecutive_successes is an unsignedSmallInteger (max 65535). A monitor that
+    // stays up would otherwise increment it once per check forever and, on strict
+    // MySQL, blow the column after ~45 days of one-minute checks. Once the up
+    // transition is confirmed the counter has no further use, so it must saturate.
+    $monitor = Monitor::factory()->up()->create(['confirmation_threshold' => 2]);
+
+    foreach (range(1, 25) as $i) {
+        $monitor->applyCheckResult(ok());
+    }
+
+    expect($monitor->status)->toBe('up');
+    expect($monitor->consecutive_successes)->toBeLessThanOrEqual($monitor->confirmation_threshold);
+});
+
+it('bounds the failure streak counter so a long-down monitor never overflows its column', function () {
+    $monitor = Monitor::factory()->down()->create(['confirmation_threshold' => 2]);
+
+    foreach (range(1, 25) as $i) {
+        $monitor->applyCheckResult(fail());
+    }
+
+    expect($monitor->status)->toBe('down');
+    expect($monitor->consecutive_failures)->toBeLessThanOrEqual($monitor->confirmation_threshold);
+});

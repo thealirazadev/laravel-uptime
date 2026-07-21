@@ -197,7 +197,12 @@ class Monitor extends Model
         $this->last_checked_at = now();
 
         if ($outcome->ok) {
-            $this->consecutive_successes++;
+            // Saturate at the threshold: past it the counter has no effect on any
+            // transition, and letting it grow unbounded would overflow the
+            // unsignedSmallInteger column on a long-lived healthy monitor.
+            if ($this->consecutive_successes < $this->confirmation_threshold) {
+                $this->consecutive_successes++;
+            }
             $this->consecutive_failures = 0;
             $this->first_failed_at = null;
             $this->last_error = null;
@@ -215,7 +220,11 @@ class Monitor extends Model
                 }
             }
         } else {
-            $this->consecutive_failures++;
+            // Saturate at the threshold, as above, so a monitor that stays down
+            // cannot overflow the counter column.
+            if ($this->consecutive_failures < $this->confirmation_threshold) {
+                $this->consecutive_failures++;
+            }
             $this->consecutive_successes = 0;
             $this->last_error = $outcome->error;
 
