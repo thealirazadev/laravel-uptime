@@ -1,5 +1,8 @@
 # laravel-uptime
 
+[![CI](https://github.com/thealirazadev/laravel-uptime/actions/workflows/ci.yml/badge.svg)](https://github.com/thealirazadev/laravel-uptime/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A self-hosted uptime, SSL-expiry, and site monitor built with Laravel. A freelancer or small agency
 adds the sites they manage; the app runs scheduled HTTP and certificate checks from queued jobs,
 records response times, opens and closes incidents with confirmation thresholds, and sends alerts
@@ -68,6 +71,52 @@ php artisan test          # full Pest suite
 ```
 
 See `docs/testing.md` for the full testing strategy and additional commands.
+
+## Design decisions
+
+The trade-offs below are the load-bearing ones; the full rationale lives in
+`docs/architecture.md` and the dated decisions log in `docs/memory.md`.
+
+- **Database queue, cache, and locks — not Redis.** The queue driver plus the cache/session
+  stores all run on the one database, so the whole app needs PHP and a single database and nothing
+  else. The `cache_locks` table provides the real atomic locks behind `WithoutOverlapping` and
+  `onOneServer`. The trade-off is lower throughput and coarser lock granularity than Redis, which
+  is irrelevant at the hundreds-of-monitors scale this targets (a one-minute tick dispatches at
+  most `monitor_count` small jobs). Redis was rejected as a *requirement*, not as an option — it
+  stays a drop-in config change if a deployment ever outgrows the database.
+
+- **SQLite in dev, MySQL 8 in prod.** Development needs zero services (`php artisan serve` plus a
+  file); production gets proper concurrent writes for multiple queue workers. The cost is that
+  "two workers race the same row" is only fully exercised on MySQL, so the claim is written as a
+  plain conditional `UPDATE` that behaves identically on both engines, and driver-specific SQL
+  (`DATE()`, `strftime()`) is banned — rollups bucket in PHP. A single engine for both
+  environments was rejected: it would force either services on developers or SQLite into
+  production.
+
+- **Blade with server-rendered SVG charts — no JS build.** Charts are inline SVG produced by
+  `Support/Chart` from rollup rows; there is no chart library and no npm/Vite build in v1. The
+  trade-off is no tooltips or zoom, which is acceptable for "is it up and how slow" charts and
+  keeps the dashboard dependency-free and fast to serve. An SPA or JS charting stack was rejected
+  as disproportionate for a server-rendered admin tool with one public read-only page.
+
+- **SSL expiry warnings are alerts, not incidents.** A certificate nearing expiry fans out over
+  the monitor's alert channels but never opens an incident; incidents stay strictly downtime.
+  Expiry warnings de-duplicate through `ssl_notified_days` (the smallest threshold already warned,
+  reset when a renewal pushes the expiry later) — one warning per threshold per certificate.
+  Modeling expiry as an incident was rejected because it would pollute uptime percentages and the
+  incident timeline with events that are not outages.
+
+- **Two independent layers stop double-dispatch.** The dispatcher claims each due monitor with a
+  conditional `UPDATE monitors SET next_check_at = ... WHERE id = ? AND next_check_at <= ?` and
+  only dispatches when exactly one row is affected; the `RunHttpCheck` job additionally holds a
+  `WithoutOverlapping(monitor_id)` lock with `dontRelease()`. Either layer alone would mostly
+  work; both together make concurrent checks of one monitor impossible even across retries or a
+  multi-server cron.
+
+- **Alert de-duplication is structural, not a flag.** Incident alerts fire only inside the
+  open/close transitions of `Monitor::applyCheckResult`. A failed check against an already-open
+  incident records a raw check row and nothing else. There is no "already alerted" flag to keep in
+  sync because there is only one code path that can emit an incident alert.
 
 ## License
 
