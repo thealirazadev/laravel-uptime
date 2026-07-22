@@ -23,6 +23,13 @@ it('warns at the 30-day threshold for a cert expiring in 20 days', function () {
     expect($monitor->ssl_notified_days)->toBe(30);
 });
 
+it('warns exactly at the top threshold but stays silent one day above it', function () {
+    // daysLeft == 30 lands on the 30-day threshold; 31 sits above every threshold,
+    // so the boundary must include its own day and exclude the day beyond it.
+    expect(Monitor::factory()->create()->applySslResult(expiresInDays(30)))->toBe(30);
+    expect(Monitor::factory()->create()->applySslResult(expiresInDays(31)))->toBeNull();
+});
+
 it('does not warn again for the same threshold', function () {
     $monitor = Monitor::factory()->create();
 
