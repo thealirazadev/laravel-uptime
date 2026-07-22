@@ -48,6 +48,19 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   from docs/testing.md in their documented order — `./vendor/bin/pint --test` and
   `php artisan test`. Verified first against a clean clone locally.
 
+- 2026-07-23 — Added README screenshots. `database/seeders/DemoSeeder.php` seeds synthetic
+  `example.com` data (six monitors in up/down/paused states, an SSL-warning monitor, 24 h hourly
+  and 30 d daily rollups for the charts, a public "Acme Cloud" group, one open and two resolved
+  incidents with timelines). `scripts/capture-screenshots.mjs` drives Playwright (not a repo
+  dependency) to shoot the dashboard, monitor detail, public status page, and incident timeline
+  into `docs/images/` at 1280-wide; all four PNGs are 60-89 KB. Referenced near the top of the
+  README with descriptive alt text plus a reproduction section. Genuine captures of the running
+  app — no application code changed. Sandbox note: `php artisan serve` still fails (libtidy), and
+  `php -S ... public/index.php` routes every request through the front controller so static CSS
+  302s and renders unstyled; captured via `php -S -t public <router>` where the router returns
+  false for existing files so assets serve. README documents the normal `php artisan serve` path.
+  pint clean, 137 tests pass, CI green.
+
 ## In progress
 
 - None. v1 implementation complete across all three phases; remaining items are the human-only
