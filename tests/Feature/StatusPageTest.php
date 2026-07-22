@@ -76,6 +76,29 @@ it('reports down when any monitor is down', function () {
     get('/status/client-c')->assertOk()->assertSee('Some systems are down');
 });
 
+it('reports down and leaks no urls when every monitor is down', function () {
+    $group = MonitorGroup::factory()->create(['slug' => 'all-down']);
+    Monitor::factory()->down()->create([
+        'name' => 'Edge one',
+        'url' => 'https://secret-a.internal.example/private',
+        'monitor_group_id' => $group->id,
+    ]);
+    Monitor::factory()->down()->create([
+        'name' => 'Edge two',
+        'url' => 'https://secret-b.internal.example/private',
+        'monitor_group_id' => $group->id,
+    ]);
+
+    $response = get('/status/all-down/json')->assertOk();
+
+    $response->assertJsonPath('data.overall', 'down');
+    $response->assertJsonPath('data.monitors.0.status', 'down');
+    $response->assertJsonPath('data.monitors.1.status', 'down');
+    expect($response->getContent())
+        ->not->toContain('secret-a.internal.example')
+        ->not->toContain('secret-b.internal.example');
+});
+
 it('serves the json twin in the documented contract shape', function () {
     $group = MonitorGroup::factory()->create(['name' => 'Client A', 'slug' => 'client-a']);
     $monitor = Monitor::factory()->up()->create([

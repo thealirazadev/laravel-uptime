@@ -80,6 +80,15 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   `expiresAfter` is >= the worst-case runtime. RunSslCheck is unaffected: its TLS read uses a fixed
   10 s connect timeout and follows no redirects, so 60 s remains ample.
 
+- 2026-07-23 — Edge-case coverage pass alongside the redirect-lock fix. Added tests only (no
+  behaviour change): RunHttpCheck follows a redirect and evaluates the final response, and an
+  over-long redirect chain becomes a failed check (`connection_failed`) rather than a job crash;
+  the SSL top-threshold boundary is pinned (a cert exactly 30 days out warns at 30, one 31 days
+  out stays silent); the public status page renders an empty public group on both the HTML and
+  JSON surfaces (unknown overall, empty monitor/incident collections); and an all-down group
+  reports `overall = down` while re-confirming no monitor URL leaks on that path. Suite: 137 ->
+  144 tests, pint clean.
+
 ## In progress
 
 - None. v1 implementation complete across all three phases; remaining items are the human-only
