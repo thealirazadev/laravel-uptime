@@ -78,6 +78,39 @@ it('classifies a generic connection failure', function () {
     expect($monitor->checks()->sole()->error)->toBe('connection_failed');
 });
 
+it('follows a redirect and evaluates the final response', function () {
+    Http::fake([
+        'redirect.example/*' => Http::response('', 301, ['Location' => 'https://final.example/']),
+        'final.example/*' => Http::response('OK', 200),
+    ]);
+    $monitor = Monitor::factory()->create([
+        'url' => 'https://redirect.example/',
+        'expected_status' => 200,
+    ]);
+
+    runCheck($monitor);
+
+    $check = $monitor->checks()->sole();
+    expect($check->ok)->toBeTrue();
+    expect($check->http_status)->toBe(200);
+});
+
+it('turns an over-long redirect chain into a failed check, not a job error', function () {
+    // Every hop 301s onward, so the redirect cap is exceeded; the resulting
+    // Guzzle exception must be caught and recorded as a failed check.
+    Http::fake(['*' => Http::response('', 301, ['Location' => 'https://loop.example/next'])]);
+    $monitor = Monitor::factory()->create([
+        'url' => 'https://loop.example/',
+        'expected_status' => 200,
+    ]);
+
+    runCheck($monitor);
+
+    $check = $monitor->checks()->sole();
+    expect($check->ok)->toBeFalse();
+    expect($check->error)->toBe('connection_failed');
+});
+
 it('writes exactly one check row per run', function () {
     Http::fake(['*' => Http::response('OK', 200)]);
     $monitor = Monitor::factory()->create();
