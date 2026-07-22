@@ -12,6 +12,27 @@ status page; operators manage everything from a plain Blade dashboard.
 Status: v1 implemented (monitors, overlap-safe queued checks, incident lifecycle, alerts, SSL
 expiry, rollups/retention, public status pages).
 
+## Screenshots
+
+Captured from the running app seeded with `DemoSeeder` (synthetic `example.com` monitors); reproduce
+with the steps under [Demo data and screenshots](#demo-data-and-screenshots).
+
+![Operator dashboard listing six monitors in up, down, and paused states, an open-incidents panel, and up/down/paused counts](docs/images/dashboard.png)
+
+*Operator dashboard: monitor states at a glance with the open-incidents panel.*
+
+![Monitor detail for Storefront API showing 24-hour and 30-day response-time line charts, a 30-day uptime bar chart, and an SSL-expiry warning with five days left](docs/images/monitor-detail.png)
+
+*Monitor detail: server-rendered SVG response-time and uptime charts, plus an SSL-expiry warning.*
+
+![Public Acme Cloud status page listing each monitor with 24h/7d/30d uptime percentages, average response time, and a recent-incidents timeline](docs/images/status-page.png)
+
+*Public status page: per-monitor uptime, response time, and recent incidents — no operator login.*
+
+![Incident detail for Storefront API with a colour-coded timeline: opened, alert sent, alert delivery failed, and recovered](docs/images/incident-timeline.png)
+
+*Incident timeline: opened, alert sent, alert failed, and recovery events with timestamps.*
+
 ## Planned stack
 
 - PHP 8.2+ / Laravel 12.x
@@ -62,6 +83,25 @@ In production, run `php artisan schedule:run` every minute from cron and supervi
 
 Log in at `/login`, add monitors, alert channels, and groups. Each public group is served at
 `/status/{slug}` (with a JSON twin at `/status/{slug}/json`).
+
+## Demo data and screenshots
+
+`database/seeders/DemoSeeder.php` populates an obviously synthetic dataset (`example.com` monitors
+in mixed states, rollup history, incidents with timelines) for demos and the screenshots above.
+
+```bash
+php artisan migrate:fresh --force
+php artisan db:seed --class=DemoSeeder --force   # login: demo@example.com / password
+```
+
+`scripts/capture-screenshots.mjs` drives Playwright over the seeded app to regenerate the PNGs in
+`docs/images/`. It needs Playwright (not a dependency of this repo) and a running server:
+
+```bash
+npm i -g playwright && npx playwright install chromium
+php artisan serve &   # http://127.0.0.1:8000
+NODE_PATH=$(npm root -g) node scripts/capture-screenshots.mjs
+```
 
 ## Test
 
