@@ -28,6 +28,25 @@ it('renders a public status page with monitor names but never urls', function ()
     expect($body)->not->toContain('secret-internal.client-a.example');
 });
 
+it('renders a public group with no active monitors without error', function () {
+    MonitorGroup::factory()->create(['name' => 'Brand new', 'slug' => 'empty']);
+
+    $body = get('/status/empty')->assertOk()->getContent();
+
+    expect($body)->toContain('No monitors are being reported for this page yet.');
+    expect($body)->toContain('Status not yet determined');
+});
+
+it('serves the json twin for an empty group as unknown with empty collections', function () {
+    MonitorGroup::factory()->create(['slug' => 'empty']);
+
+    get('/status/empty/json')
+        ->assertOk()
+        ->assertJsonPath('data.overall', 'unknown')
+        ->assertJsonPath('data.monitors', [])
+        ->assertJsonPath('data.incidents', []);
+});
+
 it('returns 404 for a non-public group', function () {
     MonitorGroup::factory()->private()->create(['slug' => 'hidden']);
 
