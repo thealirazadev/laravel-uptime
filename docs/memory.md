@@ -61,6 +61,25 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   false for existing files so assets serve. README documents the normal `php artisan serve` path.
   pint clean, 137 tests pass, CI green.
 
+- 2026-07-23 — Fixed a real edge case: a check's redirect chain could outlast its overlap lock.
+  `RunHttpCheck` follows up to 5 redirects, each with its own timeout (<= 30 s), so a worst-case run
+  is (1 + max_redirects) * max_timeout = 6 * 30 = 180 s, well past the old `expireAfter(60)`. Once
+  the lock expired, the next scheduler tick's job could acquire the now-free lock and run a second
+  check of the same monitor concurrently (the `next_check_at` claim advances at dispatch time, so it
+  does not prevent this). Chose to ALIGN THE LOCK TTL WITH THE REAL MAX RUNTIME rather than bound
+  total request time: it is the smaller, more obviously correct change, keeps the per-monitor timeout
+  semantics untouched, and preserves full redirect support. Holding the lock for the worst case is
+  also the desired behavior — while one check is genuinely still in flight against a slow target you
+  do NOT want a second concurrent check; `dontRelease()` releases the lock the instant a normal (fast)
+  check finishes, so the long TTL only ever matters as the stale-lock ceiling for a crashed worker.
+  Centralized the two bounds as `Monitor::MAX_TIMEOUT_SECONDS` (30) and `Monitor::MAX_REDIRECTS` (5),
+  mirroring the existing `Monitor::INTERVALS` pattern; both form requests now validate the timeout
+  against the constant so the invariant (actual runtime <= lock TTL) cannot drift. `RunHttpCheck::
+  lockSeconds()` returns `(1 + MAX_REDIRECTS) * MAX_TIMEOUT_SECONDS + 15` (= 195 s; the 15 s buffer
+  covers the body scan and check/incident writes). Test asserts the overlap middleware's
+  `expiresAfter` is >= the worst-case runtime. RunSslCheck is unaffected: its TLS read uses a fixed
+  10 s connect timeout and follows no redirects, so 60 s remains ample.
+
 ## In progress
 
 - None. v1 implementation complete across all three phases; remaining items are the human-only

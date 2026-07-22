@@ -25,8 +25,10 @@ class RunHttpCheck implements ShouldQueue
 
     /**
      * Overlap lock keyed by monitor id: two workers never check the same monitor
-     * at once, and a duplicate job is dropped rather than requeued. Expiry sits
-     * safely above the maximum request timeout (30 s).
+     * at once, and a duplicate job is dropped rather than requeued. The lock lives
+     * at least as long as a check can possibly run (see lockSeconds), so a slow
+     * redirect chain can never outlast the lock and let a second concurrent check
+     * of the same monitor begin.
      *
      * @return array<int, object>
      */
@@ -35,8 +37,19 @@ class RunHttpCheck implements ShouldQueue
         return [
             (new WithoutOverlapping($this->monitorId))
                 ->dontRelease()
-                ->expireAfter(60),
+                ->expireAfter(static::lockSeconds()),
         ];
+    }
+
+    /**
+     * Worst-case runtime of a single check: the initial request plus every
+     * followed redirect, each capped at the per-request timeout ceiling, with a
+     * fixed buffer for the body scan and the check/incident writes. The overlap
+     * lock is sized from this so it cannot expire while a check is still in flight.
+     */
+    public static function lockSeconds(): int
+    {
+        return (1 + Monitor::MAX_REDIRECTS) * Monitor::MAX_TIMEOUT_SECONDS + 15;
     }
 
     public function handle(): void
@@ -79,7 +92,7 @@ class RunHttpCheck implements ShouldQueue
         try {
             $response = Http::withUserAgent(config('uptime.http_user_agent'))
                 ->timeout($monitor->timeout_seconds)
-                ->withOptions(['allow_redirects' => ['max' => 5]])
+                ->withOptions(['allow_redirects' => ['max' => Monitor::MAX_REDIRECTS]])
                 ->get($monitor->url);
         } catch (ConnectionException $e) {
             return CheckOutcome::failure($this->classifyConnectionError($e));

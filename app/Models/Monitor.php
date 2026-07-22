@@ -24,6 +24,16 @@ class Monitor extends Model
     public const INTERVALS = [60, 300, 900, 1800, 3600];
 
     /**
+     * Upper bound on a monitor's per-request timeout (seconds). The create/edit
+     * form validates against it, and RunHttpCheck relies on it to size the
+     * overlap lock so a slow check can never outlast that lock.
+     */
+    public const MAX_TIMEOUT_SECONDS = 30;
+
+    /** Maximum redirects a single HTTP check follows before it fails. */
+    public const MAX_REDIRECTS = 5;
+
+    /**
      * Interval values mapped to human labels for the monitor form.
      *
      * @return array<int, string>

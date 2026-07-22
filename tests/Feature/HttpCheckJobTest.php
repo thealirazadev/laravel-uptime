@@ -3,6 +3,7 @@
 use App\Jobs\RunHttpCheck;
 use App\Models\Monitor;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -94,6 +95,20 @@ it('does nothing for a paused monitor', function () {
 
     expect($monitor->checks()->count())->toBe(0);
     Http::assertNothingSent();
+});
+
+it('holds the overlap lock at least as long as a check can run', function () {
+    $overlap = collect((new RunHttpCheck(1))->middleware())
+        ->first(fn ($middleware) => $middleware instanceof WithoutOverlapping);
+
+    // A check follows the initial request plus every redirect, each capped at the
+    // per-request timeout ceiling. The lock must outlast that whole worst case so a
+    // slow redirect chain can never let a second concurrent check of the same
+    // monitor begin.
+    $worstCaseRuntime = (1 + Monitor::MAX_REDIRECTS) * Monitor::MAX_TIMEOUT_SECONDS;
+
+    expect($overlap)->not->toBeNull();
+    expect($overlap->expiresAfter)->toBeGreaterThanOrEqual($worstCaseRuntime);
 });
 
 it('drops a duplicate job that cannot acquire the overlap lock', function () {
