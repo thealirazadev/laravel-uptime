@@ -52,6 +52,17 @@ it('renders the create, show, and edit screens', function () {
     get("/monitors/{$monitor->id}/edit")->assertOk()->assertSee('Edit monitor');
 });
 
+it('associates monitor form hints and the group select with their inputs for assistive tech', function () {
+    get('/monitors/create')
+        ->assertOk()
+        ->assertSee('<p class="hint" id="url-hint">', false)
+        ->assertSee('aria-describedby="url-hint', false)
+        // The group select previously carried no aria-describedby at all.
+        ->assertSee('aria-describedby="monitor_group_id-hint', false)
+        ->assertSee('aria-describedby="expected_keyword-hint', false)
+        ->assertSee('aria-describedby="confirmation_threshold-hint', false);
+});
+
 it('creates a monitor and marks it due immediately as unknown', function () {
     post('/monitors', validMonitorPayload())->assertRedirect();
 

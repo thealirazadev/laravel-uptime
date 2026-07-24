@@ -11,9 +11,9 @@
 
 <div class="field @error('url') field-error @enderror">
     <label for="url">URL</label>
-    <p class="hint">Full http:// or https:// address to check.</p>
+    <p class="hint" id="url-hint">Full http:// or https:// address to check.</p>
     <input id="url" type="url" name="url" value="{{ old('url', $monitor->url) }}"
-           required maxlength="2048" @error('url') aria-describedby="url-error" @enderror>
+           required maxlength="2048" aria-describedby="url-hint @error('url') url-error @enderror">
     @error('url')
         <p class="error-message" id="url-error">{{ $message }}</p>
     @enderror
@@ -22,8 +22,9 @@
 @isset($groups)
     <div class="field @error('monitor_group_id') field-error @enderror">
         <label for="monitor_group_id">Group (optional)</label>
-        <p class="hint">Groups get a shared public status page.</p>
-        <select id="monitor_group_id" name="monitor_group_id">
+        <p class="hint" id="monitor_group_id-hint">Groups get a shared public status page.</p>
+        <select id="monitor_group_id" name="monitor_group_id"
+                aria-describedby="monitor_group_id-hint @error('monitor_group_id') monitor_group_id-error @enderror">
             <option value="">No group</option>
             @foreach ($groups as $group)
                 <option value="{{ $group->id }}" @selected((int) old('monitor_group_id', $monitor->monitor_group_id) === $group->id)>
@@ -32,7 +33,7 @@
             @endforeach
         </select>
         @error('monitor_group_id')
-            <p class="error-message">{{ $message }}</p>
+            <p class="error-message" id="monitor_group_id-error">{{ $message }}</p>
         @enderror
     </div>
 @endisset
@@ -75,10 +76,10 @@
 
 <div class="field @error('expected_keyword') field-error @enderror">
     <label for="expected_keyword">Expected keyword (optional)</label>
-    <p class="hint">If set, the response body must contain this text (case-insensitive).</p>
+    <p class="hint" id="expected_keyword-hint">If set, the response body must contain this text (case-insensitive).</p>
     <input id="expected_keyword" type="text" name="expected_keyword" maxlength="255"
            value="{{ old('expected_keyword', $monitor->expected_keyword) }}"
-           @error('expected_keyword') aria-describedby="keyword-error" @enderror>
+           aria-describedby="expected_keyword-hint @error('expected_keyword') keyword-error @enderror">
     @error('expected_keyword')
         <p class="error-message" id="keyword-error">{{ $message }}</p>
     @enderror
@@ -86,10 +87,10 @@
 
 <div class="field @error('confirmation_threshold') field-error @enderror">
     <label for="confirmation_threshold">Confirmation threshold</label>
-    <p class="hint">Consecutive matching checks before status flips (flap suppression).</p>
+    <p class="hint" id="confirmation_threshold-hint">Consecutive matching checks before status flips (flap suppression).</p>
     <input id="confirmation_threshold" type="number" name="confirmation_threshold" min="1" max="10"
            value="{{ old('confirmation_threshold', $monitor->confirmation_threshold ?? 2) }}"
-           @error('confirmation_threshold') aria-describedby="threshold-error" @enderror>
+           aria-describedby="confirmation_threshold-hint @error('confirmation_threshold') threshold-error @enderror">
     @error('confirmation_threshold')
         <p class="error-message" id="threshold-error">{{ $message }}</p>
     @enderror
