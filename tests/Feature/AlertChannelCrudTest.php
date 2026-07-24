@@ -23,6 +23,13 @@ it('shows an empty state when there are no channels', function () {
     get('/channels')->assertOk()->assertSee('No alert channels yet');
 });
 
+it('associates the channel form secret hint with its input for assistive tech', function () {
+    get('/channels/create')
+        ->assertOk()
+        ->assertSee('<p class="hint" id="secret-hint">', false)
+        ->assertSee('aria-describedby="secret-hint', false);
+});
+
 it('creates a webhook channel with an encrypted config', function () {
     post('/channels', [
         'type' => 'webhook',
