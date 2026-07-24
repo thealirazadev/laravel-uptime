@@ -2,19 +2,20 @@
 
 <div class="field @error('name') field-error @enderror">
     <label for="name">Name</label>
-    <input id="name" type="text" name="name" value="{{ old('name', $group->name) }}" required maxlength="255">
+    <input id="name" type="text" name="name" value="{{ old('name', $group->name) }}" required maxlength="255"
+           @error('name') aria-describedby="name-error" @enderror>
     @error('name')
-        <p class="error-message">{{ $message }}</p>
+        <p class="error-message" id="name-error">{{ $message }}</p>
     @enderror
 </div>
 
 <div class="field @error('slug') field-error @enderror">
     <label for="slug">Slug</label>
-    <p class="hint">Used in the public status page URL (kebab-case). Leave blank to derive from the name.</p>
+    <p class="hint" id="slug-hint">Used in the public status page URL (kebab-case). Leave blank to derive from the name.</p>
     <input id="slug" type="text" name="slug" value="{{ old('slug', $group->slug) }}" maxlength="255"
-           placeholder="client-a">
+           placeholder="client-a" aria-describedby="slug-hint @error('slug') slug-error @enderror">
     @error('slug')
-        <p class="error-message">{{ $message }}</p>
+        <p class="error-message" id="slug-error">{{ $message }}</p>
     @enderror
 </div>
 

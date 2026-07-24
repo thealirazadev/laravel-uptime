@@ -24,6 +24,13 @@ it('shows an empty state when there are no groups', function () {
     get('/groups')->assertOk()->assertSee('No groups yet');
 });
 
+it('associates the group form slug hint with its input for assistive tech', function () {
+    get('/groups/create')
+        ->assertOk()
+        ->assertSee('<p class="hint" id="slug-hint">', false)
+        ->assertSee('aria-describedby="slug-hint', false);
+});
+
 it('creates a group with an explicit slug', function () {
     post('/groups', ['name' => 'Client A', 'slug' => 'client-a', 'is_public' => '1'])
         ->assertRedirect('/groups');
