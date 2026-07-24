@@ -89,6 +89,31 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   reports `overall = down` while re-confirming no monitor URL leaks on that path. Suite: 137 ->
   144 tests, pint clean.
 
+- 2026-07-25 — Repo-maturity and accessibility pass. Added community/hygiene files the public repo
+  lacked: `CONTRIBUTING.md` (real setup, the pint/pest gates from docs/testing.md, and the standards
+  from docs/rules.md), `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, placeholder contact on the
+  reserved example.com domain), `.github/ISSUE_TEMPLATE/` (bug_report + feature_request + config.yml
+  routing security reports to a private advisory), `.github/PULL_REQUEST_TEMPLATE.md` (checklist
+  tied to the pint/pest gates and the migration/secret rules), and a Keep-a-Changelog `CHANGELOG.md`
+  with a single honest Unreleased entry describing existing v1 functionality (no invented
+  versions/dates). Deliberately did NOT add `.editorconfig` — it already exists and matches the
+  repo style; skipped rather than pad.
+- 2026-07-25 — Accessibility fix: form validation errors and hint text are now programmatically
+  associated with their inputs via `aria-describedby`, closing a real gap against the design.md
+  baseline ("errors are announced via aria-describedby"). Previously `monitors/_form` wired error
+  ids on every field except the group select, and `channels/_form` and `groups/_form` wired none;
+  hint text was never associated on any form. Each input now references its hint id (always present)
+  plus the error id when present, using `aria-describedby="x-hint @error(...) x-error @enderror"`
+  (the leading space keeps the `@error` directive off a word boundary so it compiles — see the
+  2026-07-18 `@end*` Blade gotcha). Conditional edit-only channel hints reference their id
+  unconditionally; an unresolved id reference is ignored per the ARIA spec, so no empty attribute is
+  emitted. Three deterministic GET-page tests assert the hint associations. Reviewed the other named
+  surfaces and found the rest already accessible (skip link, focus-visible, role=img + aria-label
+  charts, scope=col tables, sr-only action headers, role=status/alert flashes, <time> elements,
+  delete-as-forms), and the error-handling/validation paths (malformed URL, unreachable target, TLS
+  read failure) already handled and covered — so no further changes were padded in. Suite: 144 ->
+  147 tests, pint clean, CI green.
+
 ## In progress
 
 - None. v1 implementation complete across all three phases; remaining items are the human-only
