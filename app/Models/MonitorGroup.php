@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\MonitorGroupFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MonitorGroup extends Model
@@ -31,5 +32,13 @@ class MonitorGroup extends Model
     public function monitors(): HasMany
     {
         return $this->hasMany(Monitor::class);
+    }
+
+    /**
+     * @return BelongsToMany<MaintenanceWindow, $this>
+     */
+    public function maintenanceWindows(): BelongsToMany
+    {
+        return $this->belongsToMany(MaintenanceWindow::class, 'maintenance_window_monitor_group');
     }
 }

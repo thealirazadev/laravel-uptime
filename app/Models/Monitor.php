@@ -121,6 +121,14 @@ class Monitor extends Model
     }
 
     /**
+     * @return BelongsToMany<MaintenanceWindow, $this>
+     */
+    public function maintenanceWindows(): BelongsToMany
+    {
+        return $this->belongsToMany(MaintenanceWindow::class, 'maintenance_window_monitor');
+    }
+
+    /**
      * Enabled channels attached to this monitor: the exact set an alert fans out to.
      *
      * @return Collection<int, AlertChannel>
