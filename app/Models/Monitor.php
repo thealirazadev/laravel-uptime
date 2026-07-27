@@ -7,6 +7,7 @@ use App\Support\Alerts\AlertPayload;
 use App\Support\CheckOutcome;
 use Carbon\CarbonInterface;
 use Database\Factories\MonitorFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -142,6 +143,26 @@ class Monitor extends Model
     public function openIncident(): ?Incident
     {
         return $this->incidents()->whereNull('closed_at')->latest('started_at')->first();
+    }
+
+    /**
+     * True when an active maintenance window covers this monitor at the given
+     * instant (default now), either targeting the monitor directly or its group.
+     * Drives the alert/incident suppression and the status-page indicator.
+     */
+    public function isUnderMaintenance(?CarbonInterface $at = null): bool
+    {
+        $at ??= now();
+
+        return MaintenanceWindow::active($at)
+            ->where(function (Builder $query) {
+                $query->whereHas('monitors', fn (Builder $q) => $q->whereKey($this->getKey()));
+
+                if ($this->monitor_group_id !== null) {
+                    $query->orWhereHas('groups', fn (Builder $q) => $q->whereKey($this->monitor_group_id));
+                }
+            })
+            ->exists();
     }
 
     public function isHttps(): bool
