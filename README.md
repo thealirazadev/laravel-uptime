@@ -7,10 +7,14 @@ A self-hosted uptime, SSL-expiry, and site monitor built with Laravel. A freelan
 adds the sites they manage; the app runs scheduled HTTP and certificate checks from queued jobs,
 records response times, opens and closes incidents with confirmation thresholds, and sends alerts
 over mail, Slack incoming webhooks, or a signed generic webhook. Each monitor group gets a public
-status page; operators manage everything from a plain Blade dashboard.
+status page; operators manage everything from a plain Blade dashboard. Scheduled maintenance windows
+pause incidents and alerts for chosen monitors or groups during planned work.
 
 Status: v1 implemented (monitors, overlap-safe queued checks, incident lifecycle, alerts, SSL
-expiry, rollups/retention, public status pages).
+expiry, rollups/retention, public status pages). v2 adds maintenance windows: while a window is
+active the covered monitors are still checked but open no incidents and send no alerts, a monitor
+already down keeps its incident, and the status page marks them "Under maintenance"; normal alerting
+resumes when the window ends.
 
 ## Screenshots
 

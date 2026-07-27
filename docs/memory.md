@@ -114,10 +114,39 @@ work; log every non-obvious decision with its reason. Keep entries short and dat
   read failure) already handled and covered — so no further changes were padded in. Suite: 144 ->
   147 tests, pint clean, CI green.
 
+- 2026-07-27 - Phase 4 (v2) complete: maintenance windows. Added `maintenance_windows` (title,
+  starts_at, ends_at, nullable note) plus `maintenance_window_monitor` and
+  `maintenance_window_monitor_group` pivots (versioned migrations, indexed on the start/end bounds);
+  `MaintenanceWindow` model with `monitors()`/`groups()` relations, factory (active/past/upcoming
+  states), an `active` scope, `isActive()`, and a `state()` label for the admin list;
+  `Monitor::isUnderMaintenance()` returns true when an active window targets the monitor directly or
+  through its group. Admin CRUD (index/create/edit/delete) behind `auth`, validated (title required,
+  ends_at after starts_at, at least one monitor or group targeted via a withValidator after-hook),
+  with a "Maintenance" nav entry and datetime-local inputs labelled UTC. Suppression is structural in
+  `Monitor::applyCheckResult`: a single `$suppressed = $this->isUnderMaintenance()` gate on BOTH
+  threshold transitions, so inside an active window the check row and counters still update but no
+  up/down transition runs (no incident opens or closes, no alert dispatches). Status page HTML and
+  JSON twin carry a per-monitor `maintenance` flag and show an "Under maintenance" badge. Suite: 147
+  -> 165 tests (587 assertions), pint clean.
+
+  - Decision: suppress BOTH the open and close transitions during a window (not just opening). This
+    is the literal reading of "no alerts are sent for the covered monitors" and makes "a monitor
+    already down keeps its incident" true, since a recovery during the window neither closes the
+    incident nor fires a recovery alert. Counters still saturate at the threshold, so when the window
+    ends the next qualifying check transitions immediately and alerting resumes with no manual step.
+  - Decision: "recurring note" is a free-text `note` column, not a recurrence engine (YAGNI). A
+    single window has one start and one end; the note can describe an intended cadence.
+  - Decision: times are stored and shown in UTC, matching the rest of the app (status page, incident
+    timeline). The admin form labels the datetime-local inputs UTC rather than doing timezone
+    conversion.
+  - Flag for owner: `docs/PRD.md` lists maintenance windows as a v1 non-goal. This phase is the
+    owner-approved v2 scope expansion, sanctioned by adding Phase 4 to `docs/phases.md`. The PRD
+    non-goal line was left unedited (source-of-truth change needs explicit sign-off).
+
 ## In progress
 
-- None. v1 implementation complete across all three phases; remaining items are the human-only
-  production steps in docs/launch-checklist.md.
+- None. v1 across all three phases plus the v2 maintenance-windows phase are complete; remaining
+  items are the human-only production steps in docs/launch-checklist.md.
 
 ## Decisions log
 
