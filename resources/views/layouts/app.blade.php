@@ -23,6 +23,9 @@
                 @if(Route::has('groups.index'))
                     <a href="{{ route('groups.index') }}" @if(request()->routeIs('groups.*')) aria-current="page" @endif>Groups</a>
                 @endif
+                @if(Route::has('maintenance-windows.index'))
+                    <a href="{{ route('maintenance-windows.index') }}" @if(request()->routeIs('maintenance-windows.*')) aria-current="page" @endif>Maintenance</a>
+                @endif
                 @if(Route::has('incidents.index'))
                     <a href="{{ route('incidents.index') }}" @if(request()->routeIs('incidents.*')) aria-current="page" @endif>Incidents</a>
                 @endif

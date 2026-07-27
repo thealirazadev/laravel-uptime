@@ -65,4 +65,16 @@ class MaintenanceWindow extends Model
 
         return $this->starts_at->lessThanOrEqualTo($at) && $this->ends_at->greaterThanOrEqualTo($at);
     }
+
+    /** Lifecycle label for the admin list: scheduled, active, or ended. */
+    public function state(?CarbonInterface $at = null): string
+    {
+        $at ??= now();
+
+        return match (true) {
+            $this->starts_at->greaterThan($at) => 'scheduled',
+            $this->ends_at->lessThan($at) => 'ended',
+            default => 'active',
+        };
+    }
 }

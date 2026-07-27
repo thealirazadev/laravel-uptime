@@ -4,6 +4,7 @@ use App\Http\Controllers\AlertChannelController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\MaintenanceWindowController;
 use App\Http\Controllers\MonitorController;
 use App\Http\Controllers\MonitorGroupController;
 use App\Http\Controllers\StatusPageController;
@@ -33,6 +34,9 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('groups', MonitorGroupController::class)->except(['show'])
         ->parameters(['groups' => 'group']);
+
+    Route::resource('maintenance-windows', MaintenanceWindowController::class)->except(['show'])
+        ->parameters(['maintenance-windows' => 'window']);
 
     Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
     Route::get('/incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
