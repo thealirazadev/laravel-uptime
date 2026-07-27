@@ -219,6 +219,72 @@ production polish.
 - [ ] MySQL sanity pass: migrations and the full test-relevant flows run against MySQL 8 once
       before sign-off (dev default remains SQLite).
 
+## Phase 4 (v2) - Maintenance windows
+
+Goal: an operator can schedule a planned maintenance window over specific monitors and/or groups.
+While a window is active the covered monitors still get checked and record results, but they open no
+new incidents and send no alerts; a monitor already down keeps its open incident. The public status
+page shows an "Under maintenance" indicator for covered monitors. When the window ends, normal
+alerting resumes with no manual step.
+
+Note: v1 listed maintenance windows as a non-goal in `docs/PRD.md`. This phase is an owner-approved
+v2 scope expansion; the PRD non-goal is superseded for v2 but left unedited pending sign-off.
+
+### Definition of done
+
+- `maintenance_windows` table (title, starts_at, ends_at, nullable note) plus
+  `maintenance_window_monitor` and `maintenance_window_monitor_group` pivots, each a versioned
+  migration; `MaintenanceWindow` model with `monitors()`/`groups()` relations, a factory, and an
+  `active` scope.
+- `Monitor::isUnderMaintenance()` returns true when an active window covers the monitor directly or
+  through its group.
+- Admin CRUD (index, create, edit, delete) behind `auth`, server-side validated (title required;
+  ends_at after starts_at; at least one monitor or group targeted); a "Maintenance" nav entry.
+- Suppression is structural in `Monitor::applyCheckResult`: while a covered monitor is inside an
+  active window the state machine records the check and updates counters but performs no up/down
+  transition, so no incident opens or closes and no alert dispatches. Outside a window behaviour is
+  unchanged.
+- The status page (HTML and its JSON twin) marks covered monitors as under maintenance.
+- Pint clean; tests cover alert suppressed inside a window, alert fires outside it, an existing open
+  incident preserved through a window, group-based coverage, and the status-page indicator.
+
+### Manual test checklist
+
+- Create a window from now to +1 h over one monitor, then point that monitor (threshold 2) at a dead
+  target: two failed `checks` rows are recorded, status does not flip to down, no incident, no alert.
+- With the same window active, a monitor that was already down keeps its open incident untouched.
+- Set ends_at in the past (window over), then confirm a failure opens exactly one incident and alerts
+  each channel once.
+- Attach a window to a group: every monitor in that group is covered without listing them one by one.
+- Open `/status/{slug}` during the window: a covered monitor shows an "Under maintenance" indicator
+  and the JSON twin sets `maintenance: true`; no monitor URL leaks.
+- Validation: ends_at before starts_at gives a field error; a window with no monitors and no groups
+  gives a field error.
+
+### Commits
+
+1. `docs: add maintenance windows phase to phases`
+2. `feat: add maintenance windows migration with monitor and group pivots`
+3. `feat: add maintenance window model with monitor and group relations`
+4. `feat: detect active maintenance coverage on monitors`
+5. `feat: add maintenance window crud screens`
+6. `feat: suppress incidents and alerts for monitors under maintenance`
+7. `feat: show under maintenance state on the status page`
+8. `docs: document maintenance windows in readme and memory`
+
+### Phase 4 verification
+
+- [ ] `php artisan test` green; `./vendor/bin/pint --test` clean.
+- [ ] Suppression proof: inside a window, N consecutive failures record N checks and zero
+      incidents/alerts; outside, the Nth failure opens one incident and alerts once per channel.
+- [ ] Existing incident preserved: a monitor already down before a window keeps its open incident for
+      the duration.
+- [ ] Coverage: a monitor is covered both when the window targets it directly and when the window
+      targets its group.
+- [ ] Status page: covered monitors render the maintenance indicator on HTML and JSON; no monitor URL
+      leaks.
+- [ ] Empty/edge: a window with no targets is rejected; ends_at must be after starts_at.
+
 ## Backlog
 
 _(empty — move out-of-scope ideas here with a one-line rationale)_
