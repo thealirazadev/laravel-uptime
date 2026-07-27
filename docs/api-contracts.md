@@ -1,6 +1,6 @@
-# API Contracts — laravel-uptime
+# API Contracts - laravel-uptime
 
-Base URL: value of `APP_URL`. This project has no management REST API — the dashboard is
+Base URL: value of `APP_URL`. This project has no management REST API - the dashboard is
 server-rendered Blade with session auth and CSRF (routes summarized below). Full contract detail
 covers the two machine-readable surfaces: the public status JSON endpoint and the outbound alert
 payloads (Slack and generic webhook). This contract is agreed before any code is written.
@@ -29,7 +29,7 @@ payloads (Slack and generic webhook). This contract is agreed before any code is
 
 | HTTP | `error.code` | When |
 |---|---|---|
-| 404 | `not_found` | Unknown slug, or the group is not public. Identical response for both — existence is not leaked. |
+| 404 | `not_found` | Unknown slug, or the group is not public. Identical response for both - existence is not leaked. |
 | 429 | `rate_limited` | Throttle limit exceeded. |
 | 500 | `server_error` | Unexpected error (details logged, never returned). |
 
@@ -115,9 +115,9 @@ Headers:
 | `Content-Type` | `application/json` |
 | `User-Agent` | `UPTIME_HTTP_USER_AGENT` value |
 | `X-Uptime-Event` | `incident.opened`, `incident.closed`, `ssl.expiry_warning`, or `test` |
-| `X-Uptime-Signature` | `sha256=<hex hmac-sha256 of the raw body, keyed by the channel secret>` — present only when the channel has a secret configured |
+| `X-Uptime-Signature` | `sha256=<hex hmac-sha256 of the raw body, keyed by the channel secret>` - present only when the channel has a secret configured |
 
-Body — `incident.opened`:
+Body - `incident.opened`:
 
 ```json
 {
@@ -134,10 +134,10 @@ Body — `incident.opened`:
 }
 ```
 
-Body — `incident.closed`: same shape with `monitor.status = "up"`, `closed_at` set, and
+Body - `incident.closed`: same shape with `monitor.status = "up"`, `closed_at` set, and
 `duration_seconds` filled.
 
-Body — `ssl.expiry_warning`:
+Body - `ssl.expiry_warning`:
 
 ```json
 {
@@ -148,7 +148,7 @@ Body — `ssl.expiry_warning`:
 }
 ```
 
-Body — `test`: `{"event": "test", "sent_at": "...", "message": "Test alert from laravel-uptime."}`.
+Body - `test`: `{"event": "test", "sent_at": "...", "message": "Test alert from laravel-uptime."}`.
 
 Notes: webhook payloads include the monitor URL (the receiver is operator-configured and
 trusted); the public status JSON never does. `incident` and `ssl` keys are present only for
@@ -159,10 +159,10 @@ their event types.
 `POST` to the channel's webhook URL with Slack's minimal text format. Same retry policy.
 
 ```json
-{ "text": "DOWN: Client A API (https://api.client-a.example) — status_mismatch:503. Since 2026-07-18 09:41 UTC." }
+{ "text": "DOWN: Client A API (https://api.client-a.example) - status_mismatch:503. Since 2026-07-18 09:41 UTC." }
 ```
 
-Message templates: `DOWN: {name} ({url}) — {summary}. Since {started_at}.` /
+Message templates: `DOWN: {name} ({url}) - {summary}. Since {started_at}.` /
 `RECOVERED: {name} ({url}). Down {duration}.` /
 `SSL: certificate for {name} expires in {days_left} days ({expires_at}).` /
 `Test alert from laravel-uptime.`
@@ -172,12 +172,12 @@ Message templates: `DOWN: {name} ({url}) — {summary}. Since {started_at}.` /
 To the channel's configured address, from `MAIL_FROM_*`. Subjects:
 `[laravel-uptime] DOWN: {name}`, `[laravel-uptime] RECOVERED: {name}`,
 `[laravel-uptime] SSL expiry: {name} ({days_left} days)`, `[laravel-uptime] Test alert`.
-Body: `emails/alert.blade.php` — monitor name, URL, event detail, link to the dashboard
+Body: `emails/alert.blade.php` - monitor name, URL, event detail, link to the dashboard
 monitor page.
 
 ---
 
-## Dashboard routes (summary — server-rendered, session auth + CSRF)
+## Dashboard routes (summary - server-rendered, session auth + CSRF)
 
 | Method + path | Auth | Purpose |
 |---|---|---|
@@ -203,7 +203,7 @@ state-changing routes require CSRF. There are no JSON dashboard endpoints in v1.
 | POST /login | 5/min per IP |
 | GET /status/{slug} and /status/{slug}/json | 60/min per IP |
 
-Throttled responses return `429` — the JSON endpoint uses the error envelope with
+Throttled responses return `429` - the JSON endpoint uses the error envelope with
 `rate_limited`; HTML surfaces use a plain 429 page. `X-RateLimit-Limit`,
 `X-RateLimit-Remaining`, and (on 429) `Retry-After` headers are set. Exact numbers are config;
 the shape is fixed here.

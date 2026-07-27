@@ -1,4 +1,4 @@
-# Launch Checklist — laravel-uptime
+# Launch Checklist - laravel-uptime
 
 Work top to bottom before going to production. Nothing is checked until verified in the target
 environment.
@@ -6,7 +6,7 @@ environment.
 ## Environment & configuration
 
 - [ ] Production `.env` created from `.env.example` with real values (no dummies committed).
-- [ ] `APP_KEY` generated for production — and understood as the encryption key for stored
+- [ ] `APP_KEY` generated for production - and understood as the encryption key for stored
       alert-channel configs (rotating it orphans them).
 - [ ] `APP_DEBUG=false`, `APP_ENV=production`, `APP_URL` set to the real host.
 - [ ] `DB_*` points at production MySQL 8; credentials stored securely, not in the repo.
@@ -31,7 +31,7 @@ environment.
       `uptime:user` and reviewed.
 - [ ] Status pages verified to leak no monitor URLs, error text, or operator identity.
 - [ ] Alert-channel secrets confirmed encrypted at rest and masked in forms; grep production
-      logs for webhook URLs/secrets — none present.
+      logs for webhook URLs/secrets - none present.
 - [ ] All forms CSRF-protected; all input validated via Form Requests.
 
 ## Reliability & observability
@@ -43,7 +43,7 @@ environment.
 - [ ] Mail deliverability: SPF/DKIM/DMARC for the from-domain; alert mail lands in inboxes.
 - [ ] Rollup and prune jobs observed completing on schedule; `checks` table size plateaus.
 - [ ] Database backups scheduled; a restore tested at least once.
-- [ ] The monitor host itself is monitored externally (a watcher for the watcher — even a free
+- [ ] The monitor host itself is monitored externally (a watcher for the watcher - even a free
       third-party ping on `APP_URL`).
 
 ## Pages & responses

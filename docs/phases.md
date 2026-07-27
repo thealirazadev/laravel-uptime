@@ -1,4 +1,4 @@
-# Phases — laravel-uptime
+# Phases - laravel-uptime
 
 Phase N+1 does not start until the owner approves phase N. Phases are ordered
 smallest-useful-shippable first; each ends green (app runs, tests pass, logs clean). One commit
@@ -10,10 +10,10 @@ de-duplication and retention/rollups in Phase 2.
 
 ---
 
-## Phase 1 — Foundation, monitor CRUD, and the overlap-safe check engine
+## Phase 1 - Foundation, monitor CRUD, and the overlap-safe check engine
 
 Goal: an operator can log in, create monitors, and watch the engine flip them up/down with
-confirmation thresholds and an incident timeline — no alerts yet, but the concurrency and
+confirmation thresholds and an incident timeline - no alerts yet, but the concurrency and
 state-machine core is finished and tested.
 
 ### Definition of done
@@ -87,7 +87,7 @@ state-machine core is finished and tested.
 
 ---
 
-## Phase 2 — Alerts, SSL expiry, and retention/rollups
+## Phase 2 - Alerts, SSL expiry, and retention/rollups
 
 Goal: incidents notify people exactly once per edge, certificates warn before they expire, and
 the checks table stops growing forever. All remaining differentiators land here.
@@ -156,7 +156,7 @@ the checks table stops growing forever. All remaining differentiators land here.
 
 ---
 
-## Phase 3 — Public status pages, charts, and hardening
+## Phase 3 - Public status pages, charts, and hardening
 
 Goal: shareable per-group status pages (HTML + JSON), rollup-backed charts on the dashboard, and
 production polish.
@@ -165,7 +165,7 @@ production polish.
 
 - Monitor group CRUD (name, unique kebab slug, `is_public`); group assignment on the monitor
   form; deleting a group detaches (nulls) its monitors.
-- `GET /status/{slug}`: public Blade page — group name, overall state, per-monitor status badge,
+- `GET /status/{slug}`: public Blade page - group name, overall state, per-monitor status badge,
   uptime 24 h / 7 d / 30 d, average response time, recent incidents (last 14 days, names and
   times only). Non-public or unknown slug → 404. Response cached ~60 s.
 - `GET /status/{slug}/json`: same data per the contract in `docs/api-contracts.md`, same 404
@@ -287,4 +287,4 @@ v2 scope expansion; the PRD non-goal is superseded for v2 but left unedited pend
 
 ## Backlog
 
-_(empty — move out-of-scope ideas here with a one-line rationale)_
+_(empty - move out-of-scope ideas here with a one-line rationale)_

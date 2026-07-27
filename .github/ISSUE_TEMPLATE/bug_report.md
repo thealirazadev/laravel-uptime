@@ -24,7 +24,7 @@ What you expected to happen.
 
 What actually happened. Paste relevant **structured log lines** (e.g. `check.failed`,
 `incident.opened`, `alert.send_failed`) with their context, but **redact any alert-channel URLs or
-secrets** first — they must never appear in an issue.
+secrets** first - they must never appear in an issue.
 
 ## Which surface
 
@@ -46,4 +46,4 @@ secrets** first — they must never appear in an issue.
 
 ## Additional context
 
-Anything else that helps — screenshots (with monitor URLs cropped out), timing, config values.
+Anything else that helps - screenshots (with monitor URLs cropped out), timing, config values.

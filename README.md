@@ -31,7 +31,7 @@ with the steps under [Demo data and screenshots](#demo-data-and-screenshots).
 
 ![Public Acme Cloud status page listing each monitor with 24h/7d/30d uptime percentages, average response time, and a recent-incidents timeline](docs/images/status-page.png)
 
-*Public status page: per-monitor uptime, response time, and recent incidents — no operator login.*
+*Public status page: per-monitor uptime, response time, and recent incidents - no operator login.*
 
 ![Incident detail for Storefront API with a colour-coded timeline: opened, alert sent, alert delivery failed, and recovered](docs/images/incident-timeline.png)
 
@@ -121,23 +121,23 @@ See `docs/testing.md` for the full testing strategy and additional commands.
 The trade-offs below are the load-bearing ones; the full rationale lives in
 `docs/architecture.md` and the dated decisions log in `docs/memory.md`.
 
-- **Database queue, cache, and locks — not Redis.** The queue driver plus the cache/session
+- **Database queue, cache, and locks - not Redis.** The queue driver plus the cache/session
   stores all run on the one database, so the whole app needs PHP and a single database and nothing
   else. The `cache_locks` table provides the real atomic locks behind `WithoutOverlapping` and
   `onOneServer`. The trade-off is lower throughput and coarser lock granularity than Redis, which
   is irrelevant at the hundreds-of-monitors scale this targets (a one-minute tick dispatches at
-  most `monitor_count` small jobs). Redis was rejected as a *requirement*, not as an option — it
+  most `monitor_count` small jobs). Redis was rejected as a *requirement*, not as an option - it
   stays a drop-in config change if a deployment ever outgrows the database.
 
 - **SQLite in dev, MySQL 8 in prod.** Development needs zero services (`php artisan serve` plus a
   file); production gets proper concurrent writes for multiple queue workers. The cost is that
   "two workers race the same row" is only fully exercised on MySQL, so the claim is written as a
   plain conditional `UPDATE` that behaves identically on both engines, and driver-specific SQL
-  (`DATE()`, `strftime()`) is banned — rollups bucket in PHP. A single engine for both
+  (`DATE()`, `strftime()`) is banned - rollups bucket in PHP. A single engine for both
   environments was rejected: it would force either services on developers or SQLite into
   production.
 
-- **Blade with server-rendered SVG charts — no JS build.** Charts are inline SVG produced by
+- **Blade with server-rendered SVG charts - no JS build.** Charts are inline SVG produced by
   `Support/Chart` from rollup rows; there is no chart library and no npm/Vite build in v1. The
   trade-off is no tooltips or zoom, which is acceptable for "is it up and how slow" charts and
   keeps the dashboard dependency-free and fast to serve. An SPA or JS charting stack was rejected
@@ -146,7 +146,7 @@ The trade-offs below are the load-bearing ones; the full rationale lives in
 - **SSL expiry warnings are alerts, not incidents.** A certificate nearing expiry fans out over
   the monitor's alert channels but never opens an incident; incidents stay strictly downtime.
   Expiry warnings de-duplicate through `ssl_notified_days` (the smallest threshold already warned,
-  reset when a renewal pushes the expiry later) — one warning per threshold per certificate.
+  reset when a renewal pushes the expiry later) - one warning per threshold per certificate.
   Modeling expiry as an incident was rejected because it would pollute uptime percentages and the
   incident timeline with events that are not outages.
 

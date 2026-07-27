@@ -24,7 +24,7 @@ Create a dashboard operator (there is no public registration):
 php artisan uptime:user --name="Your Name" --email="you@example.com"
 ```
 
-The app needs three processes to run end to end — the web server, a queue worker, and the
+The app needs three processes to run end to end - the web server, a queue worker, and the
 scheduler:
 
 ```bash
@@ -35,7 +35,7 @@ php artisan schedule:work # dispatches due checks every minute, plus SSL/rollup/
 
 ## Tests and formatting (required before every PR)
 
-Both gates must pass, in this order — they are exactly what CI runs:
+Both gates must pass, in this order - they are exactly what CI runs:
 
 ```bash
 ./vendor/bin/pint --test   # PSR-12 formatting check; must report no violations
@@ -53,7 +53,7 @@ php artisan test --filter=opens_incident_after_threshold   # by test name
 Tests run against in-memory SQLite via `phpunit.xml`, never your dev database. Do not use real
 time, network, or queue in tests: use `Carbon::setTestNow()`/`$this->travel()` for clocks,
 `Http::fake()` for check/Slack/webhook requests, `Mail::fake()` for mail, and `Queue::fake()` (or
-run jobs synchronously) for dispatch. Factories drive setup — no hand-built rows. See
+run jobs synchronously) for dispatch. Factories drive setup - no hand-built rows. See
 [`docs/testing.md`](docs/testing.md) for the full strategy.
 
 ## Coding standards
@@ -66,7 +66,7 @@ run jobs synchronously) for dispatch. Factories drive setup — no hand-built ro
   Do not add notification-channel packages, chart libraries, admin panels, or DTO/repository
   libraries. No new dependency without prior approval.
 - **Avoid.** Raw SQL string concatenation; `DB::raw` with user input; driver-specific SQL
-  (`DATE()`, `strftime()`) — aggregation must behave identically on SQLite and MySQL; logic in Blade
+  (`DATE()`, `strftime()`) - aggregation must behave identically on SQLite and MySQL; logic in Blade
   beyond display; fat controllers.
 - **Concurrency invariants (do not weaken).** The dispatcher claims monitors with a conditional
   `UPDATE` on `next_check_at` and dispatches only on a one-row claim; `RunHttpCheck` keeps
@@ -85,7 +85,7 @@ run jobs synchronously) for dispatch. Factories drive setup — no hand-built ro
 
 - **Conventional Commits**, short imperative subject: `feat: add ssl expiry threshold warnings`,
   `fix: reset ssl thresholds on renewal`, `test: cover alert dedup`.
-- **One discrete change per commit** — a migration, a model, a route, a view, or its test — each in
+- **One discrete change per commit** - a migration, a model, a route, a view, or its test - each in
   a working state. Do not batch multiple features into one commit.
 - Keep the diff focused on the change you are making. If you touch something out of scope, split it
   out.

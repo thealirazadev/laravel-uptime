@@ -25,8 +25,8 @@ functionality that currently exists.
   confirmed recovery, recording a timeline of events.
 - **Alerts.** Mail, Slack incoming webhook, and signed generic webhook channels with per-type
   encrypted config and masked secrets; per-monitor routing; a "send test" action. Delivery runs in
-  the `SendAlert` job with retries and backoff. De-duplication is structural — alerts fire only on
-  the incident open and close transitions — and one channel's failure never blocks another.
+  the `SendAlert` job with retries and backoff. De-duplication is structural - alerts fire only on
+  the incident open and close transitions - and one channel's failure never blocks another.
 - **SSL expiry monitoring.** A daily certificate check stores the expiry and warns through the
   monitor's channels once per crossed threshold, resetting on renewal. TLS read failures are logged
   without alerting and never open an incident.

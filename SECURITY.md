@@ -13,7 +13,7 @@ recent checkout and keep dependencies current (see `.github/dependabot.yml`).
 
 ## Reporting a vulnerability
 
-Please report security issues privately — do not open a public issue, pull request, or discussion
+Please report security issues privately - do not open a public issue, pull request, or discussion
 for anything security-sensitive.
 
 1. Go to the repository's **Security** tab and choose **Report a vulnerability** to open a private

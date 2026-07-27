@@ -29,4 +29,4 @@ Other approaches you thought about and why they fall short.
 
 ## Additional context
 
-Anything else — links, examples from similar tools, mockups.
+Anything else - links, examples from similar tools, mockups.

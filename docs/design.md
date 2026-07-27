@@ -1,4 +1,4 @@
-# Design — laravel-uptime
+# Design - laravel-uptime
 
 Two surfaces: the authenticated Blade dashboard (dense, functional, for daily operators) and the
 public status page (calm, minimal, client-facing). Both share one small hand-written stylesheet;
@@ -27,15 +27,15 @@ Status is never conveyed by color alone: every badge pairs color with a text lab
 
 ## Typography
 
-- Font: system stack — `ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+- Font: system stack - `ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
   `ui-monospace, SFMono-Regular, Menlo, monospace` for URLs, response times, and error reasons.
-- Scale (rem): 0.75 (12px, chart axis labels), 0.875 (14px, table meta), 1 (16px, body — base),
+- Scale (rem): 0.75 (12px, chart axis labels), 0.875 (14px, table meta), 1 (16px, body - base),
   1.125 (18px, card titles), 1.5 (24px, page titles), 1.875 (30px, status page heading).
 - Weights: 400 body, 500 labels/badges, 600 headings. Line height 1.5 body, 1.2 headings.
 
 ## Spacing, radius, shadows
 
-- 4/8px spacing system: 4, 8, 12, 16, 24, 32, 48. Card padding 16–24; form field gap 16;
+- 4/8px spacing system: 4, 8, 12, 16, 24, 32, 48. Card padding 16-24; form field gap 16;
   section gap 32.
 - Border radius: 6px (inputs, buttons, cards), 999px (status badges).
 - Shadows: cards `0 1px 2px rgb(15 23 42 / 0.06)`; no heavier elevation. Borders do most of the
@@ -45,30 +45,30 @@ Status is never conveyed by color alone: every badge pairs color with a text lab
 
 ## Components and states
 
-- **Buttons** — primary (accent bg, white text), secondary (surface bg, border), destructive
+- **Buttons** - primary (accent bg, white text), secondary (surface bg, border), destructive
   (`--down`). Hover: darken ~8%. Focus: 2px outline `--accent` with 2px offset (never removed).
   Disabled: 50% opacity, `cursor: not-allowed`. Loading: label swaps to "Saving…" and the button
   disables (form re-submission guard).
-- **Inputs/selects/checkboxes** — 1px `--border`, radius 6, padding 8/12. Focus: accent border +
+- **Inputs/selects/checkboxes** - 1px `--border`, radius 6, padding 8/12. Focus: accent border +
   ring. Error: `--down` border plus a message under the field referencing the input via
   `aria-describedby`. Disabled: muted bg. Every input has a visible `<label>`.
-- **Status badge** — pill, 500 weight, colored bg at ~12% tint with solid colored text
+- **Status badge** - pill, 500 weight, colored bg at ~12% tint with solid colored text
   (up/down/warn/neutral variants), always with the text label.
-- **Tables** (monitors, incidents, channels) — header row muted 14px, row hover tint,
+- **Tables** (monitors, incidents, channels) - header row muted 14px, row hover tint,
   row-level actions as text links. Empty state: centered muted message plus a primary action
   ("Add your first monitor").
-- **Flash messages** — top of content: success (up tint), error (down tint), dismiss via page
+- **Flash messages** - top of content: success (up tint), error (down tint), dismiss via page
   navigation (no JS toast system).
-- **Incident timeline** — vertical list, dot per event colored by type (opened `--down`, alerts
+- **Incident timeline** - vertical list, dot per event colored by type (opened `--down`, alerts
   `--neutral`/`--warn` when failed, closed `--up`), monospace timestamps.
-- **Charts (inline SVG)** — response-time line/area over hourly or daily rollups; uptime as a
+- **Charts (inline SVG)** - response-time line/area over hourly or daily rollups; uptime as a
   segmented bar (one segment per bucket: up tint / down tint / gray for no data). Axis labels
   12px muted; failed buckets get a visible marker, not just color. Each SVG has `role="img"` and
   an `aria-label` summarizing the window ("Average response time last 24 hours: 182 ms, range
-  120–410"). A brand-new monitor renders a "Not enough data yet" empty state instead of an empty
+  120-410"). A brand-new monitor renders a "Not enough data yet" empty state instead of an empty
   chart.
-- **Loading** — server-rendered pages have no client loading states; slow actions (test alert)
-  return via redirect + flash. Queued outcomes are labeled honestly ("Test alert queued —
+- **Loading** - server-rendered pages have no client loading states; slow actions (test alert)
+  return via redirect + flash. Queued outcomes are labeled honestly ("Test alert queued -
   check the channel").
 
 ## Status page (public) specifics

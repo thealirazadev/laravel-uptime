@@ -1,4 +1,4 @@
-# Testing — laravel-uptime
+# Testing - laravel-uptime
 
 ## Strategy
 
@@ -25,7 +25,7 @@
   expiry threshold, no-threshold-crossed silence.
 - Webhook signature: known body + secret → expected `sha256=` hex; no header without a secret.
 - `Support/Chart`: bucket selection and SVG numeric output for known rollup fixtures (no
-  pixel-perfect assertions — data mapping only).
+  pixel-perfect assertions - data mapping only).
 
 ### What gets feature tests
 
@@ -102,8 +102,8 @@ php artisan schedule:work
 
 A feature is not done until all of the following pass, in order:
 
-1. `./vendor/bin/pint --test` — no style violations.
-2. `php artisan test` — full suite green, new tests included.
+1. `./vendor/bin/pint --test` - no style violations.
+2. `php artisan test` - full suite green, new tests included.
 3. The feature's manual checklist items in `docs/phases.md` pass.
 
 After creating or editing files, run build/tests and fix all errors before reporting done. One

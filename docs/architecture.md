@@ -1,4 +1,4 @@
-# Architecture — laravel-uptime
+# Architecture - laravel-uptime
 
 ## App flow
 
@@ -15,7 +15,7 @@ queue:work (1..n workers, horizontally scalable)
 RunHttpCheck [WithoutOverlapping(monitor_id)]
         ├─ HTTP request (timeout, expected status, optional keyword)
         ├─ persist raw Check row (ok, http_status, response_time_ms, error)
-        └─ Monitor::applyCheckResult()  — the state machine
+        └─ Monitor::applyCheckResult()  - the state machine
                 ├─ ok:   successes++, failures = 0
                 │        └─ if down AND successes >= threshold → status = up,
                 │           close Incident, dispatch SendAlert(recovery) per channel
@@ -43,7 +43,7 @@ Visitor (no auth)       ──▶ GET /status/{slug} (HTML) and /status/{slug}/j
 
 ## The three concurrency/correctness mechanisms (senior differentiators)
 
-These are core Phase 1–2 requirements, not options.
+These are core Phase 1-2 requirements, not options.
 
 ### 1. Double-dispatch and overlap protection
 
@@ -54,12 +54,12 @@ Two independent layers, both required:
   `UPDATE monitors SET next_check_at = now + interval_seconds WHERE id = ? AND next_check_at <= ?`
   (bound to the `now` captured at selection). Only when the update reports one affected row is
   `RunHttpCheck` dispatched. Two scheduler processes racing on the same row means one claim wins
-  and one no-ops — no double dispatch without locks or transactions across rows. The scheduled
+  and one no-ops - no double dispatch without locks or transactions across rows. The scheduled
   task additionally runs `onOneServer()` (cache locks on the database cache store) as a
   belt-and-braces layer for multi-server cron.
 - **Overlap lock on the job.** `RunHttpCheck` uses the `WithoutOverlapping($monitorId)` job
   middleware (atomic cache locks via the `cache_locks` table) with an expiry safely above the
-  request timeout, and `dontRelease()` — a duplicate job is dropped, not retried. Two workers can
+  request timeout, and `dontRelease()` - a duplicate job is dropped, not retried. Two workers can
   never execute checks for the same monitor concurrently, even after a retry or a stuck job.
 
 ### 2. Flap suppression and alert de-duplication
@@ -70,7 +70,7 @@ The state machine lives in one place, `Monitor::applyCheckResult(CheckOutcome $o
   `first_failed_at` is set when failures go 0 → 1 and cleared on any success; it becomes the
   incident's `started_at` so the incident reflects when trouble began, not when it was confirmed.
 - Transitions happen only at the threshold: `up|unknown → down` at N consecutive failures,
-  `down → up` at N consecutive successes. `unknown → up` (first-ever confirmation) is silent — no
+  `down → up` at N consecutive successes. `unknown → up` (first-ever confirmation) is silent - no
   incident, no alert.
 - Alerts fire only inside a transition: one `incident.opened` alert per attached enabled channel
   when the incident opens, one `incident.closed` alert per channel when it closes. A failed check
@@ -84,7 +84,7 @@ The state machine lives in one place, `Monitor::applyCheckResult(CheckOutcome $o
 Raw `checks` rows are the write-hot table and are never queried over long ranges:
 
 - Hourly (`uptime:rollup hour`): aggregate each monitor's raw checks for completed hours into
-  `check_rollups` (`period = hour`) via upsert on `(monitor_id, period, period_start)` —
+  `check_rollups` (`period = hour`) via upsert on `(monitor_id, period, period_start)` -
   idempotent, safe to re-run.
 - Daily (`uptime:rollup day`): aggregate hourly rows into daily rows, then prune raw checks older
   than `UPTIME_RAW_RETENTION_DAYS` (default 7) and hourly rollups older than
@@ -97,14 +97,14 @@ Raw `checks` rows are the write-hot table and are never queried over long ranges
 
 ## Check semantics
 
-- Request: `GET` via Laravel's HTTP client, `timeout_seconds` (1–30, default 10), redirects
+- Request: `GET` via Laravel's HTTP client, `timeout_seconds` (1-30, default 10), redirects
   followed (max 5), user agent from `UPTIME_HTTP_USER_AGENT`. TLS verification on.
 - A check is **ok** when the final HTTP status equals `expected_status` (default 200) AND, if
   `expected_keyword` is set, the first 256 KB of the body contains it (case-insensitive).
 - A check is **fail** on connection error, timeout, TLS failure, wrong status, or missing keyword.
   `error` stores a short reason (`timeout`, `connection_failed`, `status_mismatch:503`,
   `keyword_missing`, `tls_error`), truncated to 255 chars. `response_time_ms` is null when no
-  response arrived. The job catches every throwable from the HTTP call — a check can fail, the
+  response arrived. The job catches every throwable from the HTTP call - a check can fail, the
   job must not.
 
 ## SSL expiry semantics
@@ -126,7 +126,7 @@ Raw `checks` rows are the write-hot table and are never queried over long ranges
 ```
 app/
 ├── Console/Commands/
-│   ├── CreateUser.php               # uptime:user — create a dashboard operator
+│   ├── CreateUser.php               # uptime:user - create a dashboard operator
 │   ├── DispatchDueChecks.php        # uptime:dispatch-checks (atomic claim)
 │   ├── DispatchSslChecks.php        # uptime:dispatch-ssl
 │   ├── RollupChecks.php             # uptime:rollup {hour|day}
@@ -202,35 +202,35 @@ tests/
 
 ## Tech stack with rationale
 
-- **Laravel 12.x (PHP 8.2+)** — scheduler, queues, HTTP client, mail, atomic cache locks, and job
+- **Laravel 12.x (PHP 8.2+)** - scheduler, queues, HTTP client, mail, atomic cache locks, and job
   middleware are all first-party, which is exactly the surface this app needs. Exact versions are
   pinned at install time and `composer.lock` is committed. Originally built on 11.x; moved to 12.x
   because the security fixes for the framework advisories this app was exposed to ship only on the
   12.x line. The 11 → 12 upgrade required no application code changes.
-- **Database queue driver + database cache/session stores** — one moving part (the database)
+- **Database queue driver + database cache/session stores** - one moving part (the database)
   instead of two. Trade-off: lower throughput and lock granularity than Redis, irrelevant at
   hundreds of monitors (a 1-minute tick dispatches at most `monitor_count` small jobs). The
   `cache_locks` table gives real atomic locks for `WithoutOverlapping` and `onOneServer`. Redis
   would be a drop-in config change later; it is deliberately not a requirement.
-- **SQLite (dev) / MySQL 8.x (prod)** — dev needs zero services (`php artisan serve` + a file);
+- **SQLite (dev) / MySQL 8.x (prod)** - dev needs zero services (`php artisan serve` + a file);
   prod gets proper concurrent writes for multiple queue workers. Trade-off: SQLite serializes
-  writes, so "two workers race" behavior is only fully exercised against MySQL — the atomic-claim
+  writes, so "two workers race" behavior is only fully exercised against MySQL - the atomic-claim
   logic is plain conditional UPDATEs that behave identically on both, and tests assert the claim
   contract, not driver internals. Anything driver-specific (no raw `DATE()`/`strftime()`) is
   banned; aggregation groups in PHP or uses portable column math.
-- **No Sail/Docker requirement** — deliberate deviation from `laravel-shortlink` (which targets
+- **No Sail/Docker requirement** - deliberate deviation from `laravel-shortlink` (which targets
   Sail): this project's brief is "no infrastructure beyond PHP + one database", and SQLite-first
   dev makes Docker pure overhead. Production is documented as plain PHP-FPM + MySQL + cron +
   `queue:work` under supervisord.
-- **Blade + server-rendered SVG charts** — no chart library, no npm build for v1. `Support/Chart`
+- **Blade + server-rendered SVG charts** - no chart library, no npm build for v1. `Support/Chart`
   turns rollup rows into a small inline SVG (bar/line). Trade-off: no tooltips/zoom; acceptable
   for "is it up and how slow" charts, and it keeps the page dependency-free and fast.
-- **Session auth, no Sanctum** — the dashboard is server-rendered forms; Laravel's session guard
+- **Session auth, no Sanctum** - the dashboard is server-rendered forms; Laravel's session guard
   + CSRF is the boring correct choice. There is no management API to tokenize.
-- **Alert channels with zero packages** — mail via built-in Mail/SMTP; Slack incoming webhooks and
+- **Alert channels with zero packages** - mail via built-in Mail/SMTP; Slack incoming webhooks and
   generic webhooks are plain `Http::post` calls. No `laravel/slack-notification-channel`
   dependency.
-- **Pest on PHPUnit, Laravel Pint** — same test/format tooling as the sibling Laravel project.
+- **Pest on PHPUnit, Laravel Pint** - same test/format tooling as the sibling Laravel project.
 
 ## Data model
 
@@ -264,10 +264,10 @@ Relationships: `hasMany(Monitor)`. Deleting a group nulls its monitors' `monitor
 | name | string | display name (status page shows this, never the URL) |
 | url | string(2048) | validated http/https |
 | interval_seconds | unsigned int | one of 60, 300, 900, 1800, 3600 |
-| timeout_seconds | unsigned tinyint, default 10 | 1–30 |
+| timeout_seconds | unsigned tinyint, default 10 | 1-30 |
 | expected_status | unsigned smallint, default 200 | exact match |
 | expected_keyword | string, nullable | case-insensitive substring |
-| confirmation_threshold | unsigned tinyint, default 2 | N consecutive results; 1–10 |
+| confirmation_threshold | unsigned tinyint, default 2 | N consecutive results; 1-10 |
 | is_active | bool, default true | false = dispatcher skips |
 | status | enum up/down/unknown, default unknown | |
 | consecutive_failures | unsigned smallint, default 0 | |
@@ -312,7 +312,7 @@ Index: composite `(monitor_id, checked_at)`.
 | max_response_time_ms | unsigned int, nullable | |
 | timestamps | | |
 
-Unique: `(monitor_id, period, period_start)` — the upsert key. Uptime % is derived, not stored.
+Unique: `(monitor_id, period, period_start)` - the upsert key. Uptime % is derived, not stored.
 
 ### Incident
 | Field | Type | Notes |
@@ -356,14 +356,14 @@ migration set. `cache_locks` is load-bearing (overlap locks, `onOneServer`).
 
 ## Where state lives
 
-- **Database (single source of truth)** — all domain data above, plus queue jobs, sessions,
+- **Database (single source of truth)** - all domain data above, plus queue jobs, sessions,
   cache, and locks. SQLite file in dev, MySQL in prod.
-- **Monitor runtime state** — on the `monitors` row itself (status, counters, `next_check_at`),
+- **Monitor runtime state** - on the `monitors` row itself (status, counters, `next_check_at`),
   mutated only inside `applyCheckResult` under the per-monitor overlap lock.
-- **Server** — session cookie auth for operators; CSRF tokens on all forms. Status page responses
+- **Server** - session cookie auth for operators; CSRF tokens on all forms. Status page responses
   cached ~60 s in the cache store.
-- **Client** — nothing beyond the session cookie. No localStorage, no JS state.
-- **Secrets** — SMTP credentials in `.env`; per-channel Slack/webhook URLs and secrets encrypted
+- **Client** - nothing beyond the session cookie. No localStorage, no JS state.
+- **Secrets** - SMTP credentials in `.env`; per-channel Slack/webhook URLs and secrets encrypted
   in `alert_channels.config`.
 
 ## External dependencies and required env vars
@@ -375,7 +375,7 @@ and a supervised `queue:work` process (1..n).
 
 | Variable | Purpose |
 |---|---|
-| `APP_KEY` | Encryption key; also protects `alert_channels.config`. Rotating it orphans stored channel configs — flagged in the launch checklist. |
+| `APP_KEY` | Encryption key; also protects `alert_channels.config`. Rotating it orphans stored channel configs - flagged in the launch checklist. |
 | `APP_URL` | Base URL used in alert links and status page URLs. |
 | `APP_DEBUG` | Must be false outside local. |
 | `DB_CONNECTION` (+ `DB_*`) | `sqlite` in dev, `mysql` in prod. |
@@ -389,5 +389,5 @@ and a supervised `queue:work` process (1..n).
 | `UPTIME_DAILY_RETENTION_DAYS` | Daily rollup retention, default 365. |
 | `UPTIME_HTTP_USER_AGENT` | User agent sent on checks. |
 
-See `.env.example` for dummy values. Slack/webhook URLs are intentionally not env vars — they are
+See `.env.example` for dummy values. Slack/webhook URLs are intentionally not env vars - they are
 per-channel data.
