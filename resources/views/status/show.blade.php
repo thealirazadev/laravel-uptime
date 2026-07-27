@@ -39,6 +39,9 @@
                     <div>
                         <strong>{{ $monitor['name'] }}</strong>
                         <span class="badge {{ $badgeClass }}">{{ $badgeLabel }}</span>
+                        @if (! empty($monitor['maintenance']))
+                            <span class="badge badge-warn">Under maintenance</span>
+                        @endif
                     </div>
                     <div class="uptimes">
                         <span>24h: {{ $monitor['uptime']['day'] !== null ? number_format($monitor['uptime']['day'], 2).'%' : '—' }}</span>

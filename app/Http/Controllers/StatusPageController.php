@@ -69,6 +69,7 @@ class StatusPageController extends Controller
             'monitors' => $monitors->map(fn (Monitor $monitor) => [
                 'name' => $monitor->name,
                 'status' => $monitor->status,
+                'maintenance' => $monitor->isUnderMaintenance($generatedAt),
                 'last_checked_at' => $monitor->last_checked_at?->toIso8601ZuluString(),
                 'uptime' => [
                     'day' => $monitor->uptimePercentage('day'),
