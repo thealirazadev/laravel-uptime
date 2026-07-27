@@ -235,6 +235,12 @@ class Monitor extends Model
     {
         $this->last_checked_at = now();
 
+        // During an active maintenance window the check is still recorded and the
+        // counters still advance, but no up/down transition runs: no incident opens
+        // or closes and no alert fires. An already-open incident is left untouched.
+        // When the window ends the next qualifying check resumes normal transitions.
+        $suppressed = $this->isUnderMaintenance();
+
         if ($outcome->ok) {
             // Saturate at the threshold: past it the counter has no effect on any
             // transition, and letting it grow unbounded would overflow the
@@ -246,7 +252,7 @@ class Monitor extends Model
             $this->first_failed_at = null;
             $this->last_error = null;
 
-            if ($this->status !== 'up' && $this->consecutive_successes >= $this->confirmation_threshold) {
+            if (! $suppressed && $this->status !== 'up' && $this->consecutive_successes >= $this->confirmation_threshold) {
                 $wasDown = $this->status === 'down';
                 $this->status = 'up';
 
@@ -273,7 +279,7 @@ class Monitor extends Model
                 $this->first_failed_at = now();
             }
 
-            if ($this->status !== 'down' && $this->consecutive_failures >= $this->confirmation_threshold) {
+            if (! $suppressed && $this->status !== 'down' && $this->consecutive_failures >= $this->confirmation_threshold) {
                 $this->status = 'down';
                 $this->save();
                 $this->openIncidentRecord();
