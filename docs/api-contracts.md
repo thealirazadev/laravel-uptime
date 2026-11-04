@@ -154,6 +154,11 @@ Notes: webhook payloads include the monitor URL (the receiver is operator-config
 trusted); the public status JSON never does. `incident` and `ssl` keys are present only for
 their event types.
 
+Verifying a signed delivery: recompute the HMAC over the raw request body with the shared secret
+and compare it to `X-Uptime-Signature` in constant time (`hash_equals` in PHP). Because
+`sent_at` is part of the signed body, receivers can reject replays by refusing deliveries whose
+`sent_at` is more than a few minutes old. Retries are new deliveries with a fresh `sent_at`.
+
 ### Slack incoming-webhook channel
 
 `POST` to the channel's webhook URL with Slack's minimal text format. Same retry policy.
@@ -189,6 +194,7 @@ monitor page.
 | GET /channels, GET /channels/create, POST /channels, GET /channels/{id}/edit, PUT /channels/{id}, DELETE /channels/{id} | auth | Alert channel CRUD; secrets masked on edit. |
 | POST /channels/{id}/test | auth | Queue a test alert; flash the outcome. |
 | GET /groups, GET /groups/create, POST /groups, GET /groups/{id}/edit, PUT /groups/{id}, DELETE /groups/{id} | auth | Monitor group CRUD. |
+| GET /maintenance-windows, GET /maintenance-windows/create, POST /maintenance-windows, GET /maintenance-windows/{id}/edit, PUT /maintenance-windows/{id}, DELETE /maintenance-windows/{id} | auth | Maintenance window CRUD (targets monitors and/or groups; times in UTC). |
 | GET /incidents, GET /incidents/{id} | auth | Incident list (open first) / timeline detail. |
 
 Validation failures re-render the form with field errors (standard Laravel session flash). All
