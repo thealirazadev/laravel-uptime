@@ -273,11 +273,12 @@ class Monitor extends Model
             $this->consecutive_successes = 0;
             $this->last_error = $outcome->error;
 
-            if ($this->consecutive_failures === 1) {
-                // Remember when the failing streak began; this becomes the
-                // incident's started_at, not the moment it was confirmed.
-                $this->first_failed_at = now();
-            }
+            // Remember when the failing streak began; this becomes the incident's
+            // started_at, not the moment it was confirmed. Keyed on the timestamp
+            // being unset rather than on the counter, because the counter saturates
+            // at the threshold and with a threshold of 1 it reads 1 on every
+            // failure, which would keep moving the streak start forward.
+            $this->first_failed_at ??= now();
 
             if (! $suppressed && $this->status !== 'down' && $this->consecutive_failures >= $this->confirmation_threshold) {
                 $this->status = 'down';

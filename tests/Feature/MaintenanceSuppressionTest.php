@@ -7,6 +7,7 @@ use App\Models\MaintenanceWindow;
 use App\Models\Monitor;
 use App\Models\MonitorGroup;
 use App\Support\CheckOutcome;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
@@ -106,4 +107,27 @@ it('suppresses a monitor covered through its group', function () {
 
     expect(Incident::count())->toBe(0);
     Queue::assertNothingPushed();
+});
+
+it('dates an incident from the first failure of a streak that spans a window with threshold 1', function () {
+    Carbon::setTestNow('2026-07-18 10:00:00');
+    $monitor = Monitor::factory()->create(['confirmation_threshold' => 1, 'status' => 'up']);
+    MaintenanceWindow::factory()->create([
+        'starts_at' => '2026-07-18 09:30:00',
+        'ends_at' => '2026-07-18 10:30:00',
+    ])->monitors()->attach($monitor->id);
+
+    // Failures inside the window are suppressed but still form the streak.
+    $monitor->applyCheckResult(mwFail());
+    Carbon::setTestNow('2026-07-18 10:15:00');
+    $monitor->applyCheckResult(mwFail());
+
+    // The window is over: the next failure opens the incident.
+    Carbon::setTestNow('2026-07-18 10:45:00');
+    $monitor->applyCheckResult(mwFail());
+
+    $incident = Incident::sole();
+    expect($incident->started_at->toDateTimeString())->toBe('2026-07-18 10:00:00');
+
+    Carbon::setTestNow();
 });
