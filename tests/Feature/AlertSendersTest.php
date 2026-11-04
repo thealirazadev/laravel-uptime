@@ -28,6 +28,8 @@ it('sends a slack down message with name, url, and summary', function () {
         expect($request->url())->toBe('https://hooks.slack.com/services/x');
         expect($request['text'])->toContain('DOWN: Client A API (https://api.client-a.example)');
         expect($request['text'])->toContain('status_mismatch:503');
+        // Template from docs/api-contracts.md: "DOWN: {name} ({url}) - {summary}. Since {started_at}."
+        expect($request['text'])->toStartWith('DOWN: Client A API (https://api.client-a.example) - status_mismatch:503. Since ');
 
         return true;
     });

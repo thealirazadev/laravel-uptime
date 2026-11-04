@@ -21,7 +21,7 @@ class SlackSender implements AlertSender
 
         return match ($payload->event) {
             'incident.opened' => sprintf(
-                'DOWN: %s (%s) — %s. Since %s.',
+                'DOWN: %s (%s) - %s. Since %s.',
                 $monitor['name'],
                 $monitor['url'],
                 $payload->incident['summary'] ?? 'check failed',
