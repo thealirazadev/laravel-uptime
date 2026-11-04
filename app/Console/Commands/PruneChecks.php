@@ -17,13 +17,19 @@ class PruneChecks extends Command
     {
         // Rollups run before this in the daily sequence, so pruned raw rows have
         // already been aggregated.
+        //
+        // Cutoffs are aligned to the bucket the next rollup level recomputes from:
+        // the hourly rollup rebuilds every hour it still has raw checks for, and the
+        // daily rollup rebuilds every day it still has hourly rows for. Cutting
+        // mid-bucket would leave a partial hour (or day) behind that the next run
+        // re-aggregates and overwrites the complete rollup with.
         $rawDeleted = Check::query()
-            ->where('checked_at', '<', now()->subDays(config('uptime.raw_retention_days')))
+            ->where('checked_at', '<', now()->subDays(config('uptime.raw_retention_days'))->startOfHour())
             ->delete();
 
         $hourlyDeleted = CheckRollup::query()
             ->where('period', 'hour')
-            ->where('period_start', '<', now()->subDays(config('uptime.hourly_retention_days')))
+            ->where('period_start', '<', now()->subDays(config('uptime.hourly_retention_days'))->startOfDay())
             ->delete();
 
         $dailyDeleted = CheckRollup::query()
