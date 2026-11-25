@@ -107,6 +107,13 @@ before it is aggregated. Retention defaults to 7 days of raw checks, 90 days of 
 365 days of daily rollups, which bounds every table. Charts, status pages and uptime percentages
 all read rollups instead of scanning raw rows, since the hourly rollup cost grows with raw volume.
 
+Bug found in review: the prune cut at exactly N days back, which at 00:20 falls twenty minutes into
+an hour (and into a day for hourly rows). Because each rollup re-aggregates every bucket it still
+finds source rows for, the next run overwrote a complete rollup with the part that survived the
+prune, so old hourly and daily figures drifted low. Prune now cuts raw checks at the start of the
+hour and hourly rollups at the start of the day, which keeps data up to one hour or one day longer
+than the nominal window.
+
 ## 9. Maintenance windows suppress both transitions
 
 A maintenance window targets monitors directly or through their group. While one is active,
