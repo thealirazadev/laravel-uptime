@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project aims to follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-There are no tagged releases yet; the project ships from `main`. The entry below describes the v1
+There are no tagged releases yet; the project ships from `main`. The entry below describes the
 functionality that currently exists.
 
 ## [Unreleased]
@@ -39,6 +39,9 @@ functionality that currently exists.
 - **Charts.** Server-rendered inline SVG response-time and uptime charts on the monitor detail,
   built from rollups with an honest "not enough data yet" empty state; no JavaScript charting
   library or build step.
+- **Maintenance windows.** Windows target monitors directly or through their group; while one is
+  active, checks still run but no incident opens or closes and no alert is sent, and the status
+  page marks the covered monitors "Under maintenance".
 - **Hardening.** Per-IP rate limiting on login and the status pages with a consistent JSON error
   envelope on 429; custom 404/429/500 pages; structured logging throughout.
 - **Project support files.** CI running the Pint and Pest gates, a Dependabot config, a security

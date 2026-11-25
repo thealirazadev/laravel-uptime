@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-laravel-uptime is at v1 and is released from the `main` branch; there are no tagged releases yet.
+laravel-uptime is released from the `main` branch; there are no tagged releases yet.
 Security fixes land on `main`, so the latest `main` is the only supported line. Run against a
 recent checkout and keep dependencies current (see `.github/dependabot.yml`).
 

@@ -3,7 +3,7 @@
 Two surfaces: the authenticated Blade dashboard (dense, functional, for daily operators) and the
 public status page (calm, minimal, client-facing). Both share one small hand-written stylesheet;
 no CSS framework, no JS beyond a few lines (mobile nav toggle, delete confirms). Charts are
-server-rendered inline SVG. Light theme only in v1.
+server-rendered inline SVG. Light theme only.
 
 ## Color & theme
 
