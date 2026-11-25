@@ -90,7 +90,9 @@ Raw `checks` rows are the write-hot table and are never queried over long ranges
   than `UPTIME_RAW_RETENTION_DAYS` (default 7) and hourly rollups older than
   `UPTIME_HOURLY_RETENTION_DAYS` (default 90). Daily rollups keep
   `UPTIME_DAILY_RETENTION_DAYS` (default 365). Rollup always runs before prune in the same
-  scheduled sequence, so nothing is deleted before it is aggregated.
+  scheduled sequence, so nothing is deleted before it is aggregated. Prune cutoffs are aligned to
+  rollup buckets (raw checks in whole hours, hourly rollups in whole days), so a re-run rollup
+  never sees a partly pruned bucket.
 - Uptime % is derived (`1 - checks_failed / checks_total`) at read time, never stored. Charts:
   last 24 h from hourly rollups, last 30/90 d from daily rollups. The current partial hour may be
   supplemented from raw checks on the monitor detail page only.

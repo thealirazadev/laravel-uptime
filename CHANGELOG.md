@@ -46,3 +46,10 @@ functionality that currently exists.
   envelope on 429; custom 404/429/500 pages; structured logging throughout.
 - **Project support files.** CI running the Pint and Pest gates, a Dependabot config, a security
   policy, a demo seeder and screenshot capture script, and this contributing/conduct/changelog set.
+
+### Fixed
+
+- **Retention no longer corrupts old rollups.** `uptime:prune` cuts raw checks at the start of an
+  hour and hourly rollups at the start of a day, so a later rollup run cannot overwrite a complete
+  hourly or daily figure with a partly pruned one. Data is kept up to one hour or one day past the
+  nominal window.
