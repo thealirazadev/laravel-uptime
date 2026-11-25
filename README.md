@@ -10,8 +10,8 @@ over mail, Slack incoming webhooks, or a signed generic webhook. Each monitor gr
 status page; operators manage everything from a plain Blade dashboard. Scheduled maintenance windows
 pause incidents and alerts for chosen monitors or groups during planned work.
 
-Status: v1 implemented (monitors, overlap-safe queued checks, incident lifecycle, alerts, SSL
-expiry, rollups/retention, public status pages). v2 adds maintenance windows: while a window is
+Implemented: monitors, overlap-safe queued checks, the incident lifecycle, alerts, SSL expiry,
+rollups and retention, public status pages, and maintenance windows. While a maintenance window is
 active the covered monitors are still checked but open no incidents and send no alerts, a monitor
 already down keeps its incident, and the status page marks them "Under maintenance"; normal alerting
 resumes when the window ends.
@@ -37,7 +37,7 @@ with the steps under [Demo data and screenshots](#demo-data-and-screenshots).
 
 *Incident timeline: opened, alert sent, alert failed, and recovery events with timestamps.*
 
-## Planned stack
+## Stack
 
 - PHP 8.2+ / Laravel 12.x
 - Blade + minimal server-rendered SVG charts (no SPA, no JS framework)
@@ -45,7 +45,13 @@ with the steps under [Demo data and screenshots](#demo-data-and-screenshots).
 - Laravel scheduler + database queue driver (no Redis dependency)
 - Pest (feature + unit tests) on PHPUnit, Laravel Pint (PSR-12 formatting)
 
-See `docs/` for the PRD, architecture, API contracts, phases, and engineering rules.
+Documentation in `docs/`:
+
+- [`architecture.md`](docs/architecture.md) - app flow, concurrency mechanisms, data model, stack rationale
+- [`api-contracts.md`](docs/api-contracts.md) - dashboard routes, the public status JSON, alert payloads
+- [`design.md`](docs/design.md) - dashboard and status page visual and accessibility conventions
+- [`testing.md`](docs/testing.md) - test strategy, commands, and what CI runs
+- [`decisions.md`](docs/decisions.md) - design decisions and the reasons behind them
 
 ## Requirements
 
@@ -119,7 +125,7 @@ See `docs/testing.md` for the full testing strategy and additional commands.
 ## Design decisions
 
 The trade-offs below are the load-bearing ones; the full rationale lives in
-`docs/architecture.md` and the dated decisions log in `docs/memory.md`.
+[`docs/decisions.md`](docs/decisions.md) and `docs/architecture.md`.
 
 - **Database queue, cache, and locks - not Redis.** The queue driver plus the cache/session
   stores all run on the one database, so the whole app needs PHP and a single database and nothing
@@ -138,7 +144,7 @@ The trade-offs below are the load-bearing ones; the full rationale lives in
   production.
 
 - **Blade with server-rendered SVG charts - no JS build.** Charts are inline SVG produced by
-  `Support/Chart` from rollup rows; there is no chart library and no npm/Vite build in v1. The
+  `Support/Chart` from rollup rows; there is no chart library and no npm/Vite build. The
   trade-off is no tooltips or zoom, which is acceptable for "is it up and how slow" charts and
   keeps the dashboard dependency-free and fast to serve. An SPA or JS charting stack was rejected
   as disproportionate for a server-rendered admin tool with one public read-only page.

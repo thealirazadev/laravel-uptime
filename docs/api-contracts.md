@@ -192,7 +192,7 @@ monitor page.
 | GET /incidents, GET /incidents/{id} | auth | Incident list (open first) / timeline detail. |
 
 Validation failures re-render the form with field errors (standard Laravel session flash). All
-state-changing routes require CSRF. There are no JSON dashboard endpoints in v1.
+state-changing routes require CSRF. There are no JSON dashboard endpoints.
 
 ---
 

@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('title');
             $table->dateTime('starts_at');
             $table->dateTime('ends_at');
-            // Free-text note, e.g. describing an intended recurrence; no recurrence engine in v2.
+            // Free-text note, e.g. describing an intended recurrence; there is no recurrence engine.
             $table->string('note')->nullable();
             $table->timestamps();
             // The active-window lookup filters on both bounds.

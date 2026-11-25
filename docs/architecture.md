@@ -41,9 +41,9 @@ Operator (session auth) ──▶ Blade dashboard: monitors, channels, groups, i
 Visitor (no auth)       ──▶ GET /status/{slug} (HTML) and /status/{slug}/json (cached, throttled)
 ```
 
-## The three concurrency/correctness mechanisms (senior differentiators)
+## The three concurrency/correctness mechanisms
 
-These are core Phase 1-2 requirements, not options.
+These are core guarantees of the design, not options.
 
 ### 1. Double-dispatch and overlap protection
 
@@ -222,7 +222,7 @@ tests/
   Sail): this project's brief is "no infrastructure beyond PHP + one database", and SQLite-first
   dev makes Docker pure overhead. Production is documented as plain PHP-FPM + MySQL + cron +
   `queue:work` under supervisord.
-- **Blade + server-rendered SVG charts** - no chart library, no npm build for v1. `Support/Chart`
+- **Blade + server-rendered SVG charts** - no chart library, no npm build. `Support/Chart`
   turns rollup rows into a small inline SVG (bar/line). Trade-off: no tooltips/zoom; acceptable
   for "is it up and how slow" charts, and it keeps the page dependency-free and fast.
 - **Session auth, no Sanctum** - the dashboard is server-rendered forms; Laravel's session guard

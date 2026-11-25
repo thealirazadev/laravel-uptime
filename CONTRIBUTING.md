@@ -2,8 +2,8 @@
 
 Thanks for taking the time to contribute. This is a self-hosted Laravel uptime, SSL-expiry, and
 site monitor. The guidelines below keep changes small, tested, and consistent with the existing
-codebase. The full engineering rules live in [`docs/rules.md`](docs/rules.md); this file is the
-short version plus the exact commands you need.
+codebase. The reasoning behind the main design choices lives in
+[`docs/decisions.md`](docs/decisions.md); this file covers the standards and the exact commands you need.
 
 ## Local setup
 

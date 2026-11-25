@@ -2,10 +2,9 @@
 
 ## Strategy
 
-- **Automated first, manual second.** Every feature ships with tests in the same commit series.
-  Manual QA (the phase checklists in `docs/phases.md`) covers what automation can't reach
-  honestly: real SMTP/Slack delivery, long-running scheduler/worker behavior, and visual/a11y
-  review of the dashboard and status pages.
+- **Automated first, manual second.** Every feature ships with tests. Manual QA (listed below)
+  covers what automation can't reach honestly: real SMTP/Slack delivery, long-running
+  scheduler/worker behavior, and visual/a11y review of the dashboard and status pages.
 - **Pest on PHPUnit.** Feature tests for HTTP behavior, jobs, and commands; unit tests for pure
   logic. `RefreshDatabase` everywhere; tests run against in-memory SQLite via `phpunit.xml`
   overrides regardless of the local dev driver. Never against the dev database.
@@ -55,7 +54,7 @@
 
 - A real end-to-end alert to a real Slack webhook and a real mailbox (or Mailpit).
 - `schedule:work` + two `queue:work` processes observed over several intervals.
-- Phase 3 MySQL sanity pass (migrations + core flows against MySQL 8).
+- A MySQL 8 sanity pass (migrations + core flows against MySQL 8).
 - Accessibility/visual review against `docs/design.md`.
 
 ## Exact commands
@@ -98,13 +97,23 @@ php artisan queue:work
 php artisan schedule:work
 ```
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request to `main`, on PHP 8.2. After
+`composer install` it copies `.env.example` to `.env`, runs `php artisan key:generate`, and then
+runs, in order:
+
+1. `./vendor/bin/pint --test` - no style violations.
+2. `php artisan test` - the full suite on in-memory SQLite.
+
+There is no migration step: `phpunit.xml` pins the suite to in-memory SQLite and `RefreshDatabase`
+builds the schema. Everything under "Manual QA only" stays outside CI because it needs real
+services or human judgment.
+
 ## Definition of "done" for a feature
 
 A feature is not done until all of the following pass, in order:
 
 1. `./vendor/bin/pint --test` - no style violations.
 2. `php artisan test` - full suite green, new tests included.
-3. The feature's manual checklist items in `docs/phases.md` pass.
-
-After creating or editing files, run build/tests and fix all errors before reporting done. One
-commit per feature, in the order listed in `docs/phases.md`.
+3. The relevant manual QA items above pass.

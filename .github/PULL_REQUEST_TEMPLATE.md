@@ -20,7 +20,7 @@
 - [ ] No new runtime dependency (or it is called out and justified below)
 - [ ] No secrets, alert-channel URLs, or monitor URLs added to logs, code, or the public status pages
 - [ ] User input is validated server-side in a Form Request; user-rendered output stays escaped
-- [ ] Docs updated where relevant (`README.md`, `docs/`); `docs/memory.md` notes any non-obvious decision
+- [ ] Docs updated where relevant (`README.md`, `docs/`); `docs/decisions.md` records any non-obvious design decision
 
 ## Notes for reviewers
 
